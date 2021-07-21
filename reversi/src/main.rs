@@ -1,3 +1,7 @@
+mod board;
+mod constants;
+mod indexer;
+
 fn main() {
-    println!("Hello, world!");
+    println!("Hello, world! {}", 8);
 }
