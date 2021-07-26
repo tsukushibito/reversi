@@ -3,7 +3,7 @@
 pub const BOARD_SIZE: usize = 8;
 
 #[derive(Clone, Copy)]
-enum Square {
+pub enum Square {
     Empty,
     Black,
     White,
