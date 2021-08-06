@@ -2,11 +2,11 @@
 
 pub const BOARD_SIZE: usize = 8;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Square {
-    Empty,
-    Black,
-    White,
+    Empty = 1,
+    Black = 2,
+    White = 0,
 }
 
 struct Board {
