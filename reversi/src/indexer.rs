@@ -1,22 +1,20 @@
 ﻿use crate::board::Square;
 use crate::board::BOARD_SIZE;
 
-enum Direction {
-    Left2Right,
-    Top2Bottom,
-    TopLeft2BottomRight,
-    BottomLeft2TopRight,
-}
-
 #[derive(Clone, Copy, Default)]
-struct FlipInfo {
+pub struct FlipInfo {
     pub lower: u8,
     pub higher: u8,
 }
 
+impl FlipInfo {
+    pub fn flip_count(&self) -> u8 {
+        self.lower + self.higher
+    }
+}
+
 #[derive(Clone, Copy, Default)]
 struct MobilityInfo {
-    pub movables: u8,
     pub flip_infos: [FlipInfo; BOARD_SIZE],
 }
 
@@ -30,9 +28,25 @@ pub struct Indexer {
 impl Indexer {
     pub fn new() -> Indexer {
         Indexer {
-            mobility_table_for_black: [MobilityInfo::default(); INDEX_COUNT],
-            mobility_table_for_white: [MobilityInfo::default(); INDEX_COUNT],
+            mobility_table_for_black: create_mobility_table(Square::Black),
+            mobility_table_for_white: create_mobility_table(Square::White),
         }
+    }
+
+    pub fn get_flip_info(
+        &self,
+        color: Square,
+        line: &[Square; BOARD_SIZE],
+        pos: usize,
+    ) -> FlipInfo {
+        let index = line_to_index(line);
+        let table = match color {
+            Square::Black => self.mobility_table_for_black,
+            Square::White => self.mobility_table_for_white,
+            _ => panic!(),
+        };
+
+        table[index].flip_infos[pos]
     }
 }
 
@@ -107,8 +121,6 @@ fn create_mobility_table(color: Square) -> [MobilityInfo; INDEX_COUNT] {
             if i_it < BOARD_SIZE as i32 && i_it - pos > 1 && line[i_it as usize] == color {
                 flip_info.higher = (i_it - pos - 1) as u8;
             }
-
-            info.movables += flip_info.lower + flip_info.higher;
         }
     }
 
@@ -171,6 +183,48 @@ mod tests {
     fn test_create_mobility_table() {
         let table = create_mobility_table(Square::Black);
 
-        for info in table {}
+        for (i, info) in table.iter().enumerate() {
+            let line = index_to_line(i);
+            for (pos, finfo) in info.flip_infos.iter().enumerate() {
+                if finfo.lower != 0 {
+                    assert!(Square::Empty == line[pos]);
+                    for it in 1..=finfo.lower as usize {
+                        assert!(Square::White == line[pos - it]);
+                    }
+                    assert!(Square::Black == line[pos - finfo.lower as usize - 1]);
+                }
+
+                if finfo.higher != 0 {
+                    assert!(Square::Empty == line[pos]);
+                    for it in 1..=finfo.higher as usize {
+                        assert!(Square::White == line[pos + it]);
+                    }
+                    assert!(Square::Black == line[pos + finfo.higher as usize + 1]);
+                }
+            }
+        }
+
+        let table = create_mobility_table(Square::White);
+
+        for (i, info) in table.iter().enumerate() {
+            let line = index_to_line(i);
+            for (pos, finfo) in info.flip_infos.iter().enumerate() {
+                if finfo.lower != 0 {
+                    assert!(Square::Empty == line[pos]);
+                    for it in 1..=finfo.lower as usize {
+                        assert!(Square::Black == line[pos - it]);
+                    }
+                    assert!(Square::White == line[pos - finfo.lower as usize - 1]);
+                }
+
+                if finfo.higher != 0 {
+                    assert!(Square::Empty == line[pos]);
+                    for it in 1..=finfo.higher as usize {
+                        assert!(Square::Black == line[pos + it]);
+                    }
+                    assert!(Square::White == line[pos + finfo.higher as usize + 1]);
+                }
+            }
+        }
     }
 }
