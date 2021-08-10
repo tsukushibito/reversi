@@ -7,35 +7,17 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'reversi'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=reversi",
-                    "--package=reversi"
-                ],
-                "filter": {
-                    "name": "reversi",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'reversi'",
+            "name": "Debug unit tests in library 'reversi'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=reversi",
+                    "--lib",
                     "--package=reversi"
                 ],
                 "filter": {
                     "name": "reversi",
-                    "kind": "bin"
+                    "kind": "lib"
                 }
             },
             "args": [],

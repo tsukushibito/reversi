@@ -1,4 +1,5 @@
 ﻿use crate::action::Action;
+use crate::indexer::FlipInfo;
 use crate::indexer::Indexer;
 
 pub const BOARD_SIZE: usize = 8;
@@ -39,33 +40,19 @@ impl Board {
     }
 
     pub fn apply_action(&mut self, action: &Action) -> bool {
-        // 左右方向の情報
-        let l2r = self.get_line(action.row, action.col, LineDirection::Left2Right);
-        let l2r_finfo = self.indexer.get_flip_info(action.color, &l2r, action.col);
+        if action.pass {
+            // パスできるかチェック
+            return self.can_pass(action.color);
+        }
 
-        // 上下方向の情報
-        let t2b = self.get_line(action.row, action.col, LineDirection::Top2Bottom);
-        let t2b_finfo = self.indexer.get_flip_info(action.color, &t2b, action.row);
+        if self.squares[action.row][action.col] != Square::Empty {
+            // 空きマス以外には石を置けない
+            return false;
+        }
 
-        let row = action.row as i32;
-        let col = action.col as i32;
-        // 左上から右下方向の情報
-        let tl2br = self.get_line(action.row, action.col, LineDirection::TopLeft2BottomRight);
-        let pos = if row - col >= 0 {
-            action.col
-        } else {
-            action.row
-        };
-        let tl2br_finfo = self.indexer.get_flip_info(action.color, &tl2br, pos);
-
-        // 左下から右上方向の情報
-        let bl2tr = self.get_line(action.row, action.col, LineDirection::BottomLeft2TopRight);
-        let pos = if row + col - BOARD_SIZE as i32 - 1 < 0 {
-            action.col
-        } else {
-            BOARD_SIZE - 1 - action.row
-        };
-        let bl2tr_finfo = self.indexer.get_flip_info(action.color, &bl2tr, pos);
+        // 各方向の情報取得
+        let (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo) =
+            self.get_flip_infos(action.color, action.row, action.col);
 
         // ひっくり返す石の数
         let flip_count = l2r_finfo.flip_count()
@@ -128,6 +115,39 @@ impl Board {
         true
     }
 
+    fn get_flip_infos(
+        &self,
+        color: Square,
+        row: usize,
+        col: usize,
+    ) -> (FlipInfo, FlipInfo, FlipInfo, FlipInfo) {
+        // 左右方向の情報
+        let l2r = self.get_line(row, col, LineDirection::Left2Right);
+        let l2r_finfo = self.indexer.get_flip_info(color, &l2r, col);
+
+        // 上下方向の情報
+        let t2b = self.get_line(row, col, LineDirection::Top2Bottom);
+        let t2b_finfo = self.indexer.get_flip_info(color, &t2b, row);
+
+        let r = row as i32;
+        let c = col as i32;
+        // 左上から右下方向の情報
+        let tl2br = self.get_line(row, col, LineDirection::TopLeft2BottomRight);
+        let pos = if r - c >= 0 { col } else { row };
+        let tl2br_finfo = self.indexer.get_flip_info(color, &tl2br, pos);
+
+        // 左下から右上方向の情報
+        let bl2tr = self.get_line(row, col, LineDirection::BottomLeft2TopRight);
+        let pos = if r + c - BOARD_SIZE as i32 - 1 < 0 {
+            col
+        } else {
+            BOARD_SIZE - 1 - row
+        };
+        let bl2tr_finfo = self.indexer.get_flip_info(color, &bl2tr, pos);
+
+        (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo)
+    }
+
     fn get_line(&self, row: usize, col: usize, dir: LineDirection) -> [Square; BOARD_SIZE] {
         match dir {
             LineDirection::Left2Right => self.squares[row],
@@ -171,6 +191,24 @@ impl Board {
                 line
             }
         }
+    }
+
+    fn can_pass(&self, color: Square) -> bool {
+        let mut count = 0;
+        for r in 0..BOARD_SIZE {
+            for c in 0..BOARD_SIZE {
+                if self.squares[r][c] != Square::Empty {
+                    continue;
+                }
+                let (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo) =
+                    self.get_flip_infos(color, r, c);
+                count += l2r_finfo.flip_count()
+                    + t2b_finfo.flip_count()
+                    + tl2br_finfo.flip_count() * bl2tr_finfo.flip_count();
+            }
+        }
+
+        count == 0
     }
 }
 
