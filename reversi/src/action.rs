@@ -8,12 +8,21 @@ pub struct Action {
 }
 
 impl Action {
-    pub fn new(color: Square, row: usize, col: usize, pass: bool) -> Action {
+    pub fn new_move(color: Square, row: usize, col: usize) -> Action {
         Action {
             color: color,
             row: row,
             col: col,
-            pass: pass,
+            pass: false,
+        }
+    }
+
+    pub fn new_pass(color: Square) -> Action {
+        Action {
+            color: color,
+            row: 0,
+            col: 0,
+            pass: true,
         }
     }
 }

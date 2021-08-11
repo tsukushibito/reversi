@@ -46,10 +46,102 @@ where
                         // 2連続パスなのでゲーム終了
                         break;
                     }
+                    self.has_passed = true;
                 } else {
                     self.has_passed = false;
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::action::Action;
+    use crate::board::Square;
+    use crate::board::BOARD_SIZE;
+
+    struct Test1Player {}
+
+    impl Test1Player {
+        fn new() -> Test1Player {
+            Test1Player {}
+        }
+    }
+
+    impl Player for Test1Player {
+        fn take_action(
+            &mut self,
+            depth: u32,
+            squares: [[Square; BOARD_SIZE]; BOARD_SIZE],
+        ) -> Action {
+            let color = if depth % 2 == 0 {
+                Square::Black
+            } else {
+                Square::White
+            };
+
+            let mut board = Board::new();
+            board.squares = squares;
+            let positions = board.get_movable_positions(color);
+
+            if positions.len() == 0 {
+                return Action::new_pass(color);
+            }
+
+            let (r, c) = positions[0];
+            Action::new_move(color, r, c)
+        }
+    }
+
+    struct Test2Player {}
+
+    impl Test2Player {
+        pub fn new() -> Test2Player {
+            Test2Player {}
+        }
+    }
+
+    impl Player for Test2Player {
+        fn take_action(
+            &mut self,
+            depth: u32,
+            squares: [[Square; BOARD_SIZE]; BOARD_SIZE],
+        ) -> Action {
+            let color = if depth % 2 == 0 {
+                Square::Black
+            } else {
+                Square::White
+            };
+            match depth {
+                0 => Action::new_move(color, 4, 5),
+                1 => Action::new_move(color, 5, 5),
+                2 => Action::new_move(color, 5, 4),
+                3 => Action::new_move(color, 3, 5),
+                4 => Action::new_move(color, 2, 4),
+                5 => Action::new_move(color, 1, 3),
+                6 => Action::new_move(color, 2, 3),
+                7 => Action::new_move(color, 5, 3),
+                8 => Action::new_move(color, 3, 2),
+                9 => Action::new_move(color, 3, 1),
+                _ => Action::new_pass(color),
+            }
+        }
+    }
+
+    #[test]
+    fn test_run() {
+        let black = Test1Player::new();
+        let white = Test1Player::new();
+        let mut reversi = Reversi::new(black, white);
+        reversi.run();
+
+        let black = Test2Player::new();
+        let white = Test2Player::new();
+        let mut reversi = Reversi::new(black, white);
+        reversi.run();
+
+        assert_eq!(12, reversi.depth)
     }
 }

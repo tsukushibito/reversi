@@ -5,6 +5,7 @@ use crate::indexer::Indexer;
 pub const BOARD_SIZE: usize = 8;
 pub type Squares = [[Square; BOARD_SIZE]; BOARD_SIZE];
 
+/// 方向
 pub enum LineDirection {
     Left2Right,
     Top2Bottom,
@@ -12,6 +13,7 @@ pub enum LineDirection {
     BottomLeft2TopRight,
 }
 
+/// マスの状態
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Square {
     Empty = 1,
@@ -19,12 +21,14 @@ pub enum Square {
     White = 0,
 }
 
+/// ボード
 pub struct Board {
     pub squares: Squares,
     indexer: Indexer,
 }
 
 impl Board {
+    /// 新規作成
     pub fn new() -> Board {
         let mut squares = [[Square::Empty; BOARD_SIZE]; BOARD_SIZE];
         squares[3][4] = Square::Black;
@@ -39,6 +43,8 @@ impl Board {
         }
     }
 
+    /// アクション受付
+    /// 有効なアクションであればtrue、無効なアクションであればfalseを返す
     pub fn apply_action(&mut self, action: &Action) -> bool {
         if action.pass {
             // パスできるかチェック
@@ -115,6 +121,21 @@ impl Board {
         true
     }
 
+    pub fn get_movable_positions(&self, color: Square) -> Vec<(usize, usize)> {
+        let mut positions = Vec::new();
+        for r in 0..BOARD_SIZE {
+            for c in 0..BOARD_SIZE {
+                let (l2r, t2b, tl2br, bl2tr) = self.get_flip_infos(color, r, c);
+                let count =
+                    l2r.flip_count() + t2b.flip_count() + tl2br.flip_count() + bl2tr.flip_count();
+                if count > 0 {
+                    positions.push((r, c));
+                }
+            }
+        }
+        positions
+    }
+
     fn get_flip_infos(
         &self,
         color: Square,
@@ -138,7 +159,7 @@ impl Board {
 
         // 左下から右上方向の情報
         let bl2tr = self.get_line(row, col, LineDirection::BottomLeft2TopRight);
-        let pos = if r + c - BOARD_SIZE as i32 - 1 < 0 {
+        let pos = if r + c - BOARD_SIZE as i32 + 1 < 0 {
             col
         } else {
             BOARD_SIZE - 1 - row
@@ -254,11 +275,11 @@ mod tests {
     fn test_apply_action() {
         let mut board = Board::new();
 
-        let act = Action::new(Square::Black, 0, 0, false);
+        let act = Action::new_move(Square::Black, 0, 0);
         let r = board.apply_action(&act);
         assert!(!r);
 
-        let act = Action::new(Square::Black, 2, 3, false);
+        let act = Action::new_move(Square::Black, 2, 3);
         let r = board.apply_action(&act);
         assert!(r);
         assert!(board.squares[2][3] == Square::Black);
@@ -267,7 +288,7 @@ mod tests {
         assert!(board.squares[3][4] == Square::Black);
         assert!(board.squares[4][4] == Square::White);
 
-        let act = Action::new(Square::White, 2, 2, false);
+        let act = Action::new_move(Square::White, 2, 2);
         let r = board.apply_action(&act);
         assert!(r);
         assert!(board.squares[2][3] == Square::Black);
