@@ -19,6 +19,7 @@ where
     U: Player,
 {
     pub fn new(black_player: T, white_player: U) -> Reversi<T, U> {
+        println!("{}", crate::BOARD_SIZE);
         let board = Board::new();
         Reversi {
             board: board,
@@ -33,14 +34,13 @@ where
         loop {
             let action = if self.depth % 2 == 0 {
                 self.black_player
-                    .take_action(self.depth, self.board.squares)
+                    .take_action(self.depth, &self.board.squares)
             } else {
                 self.white_player
-                    .take_action(self.depth, self.board.squares)
+                    .take_action(self.depth, &self.board.squares)
             };
 
             if self.board.apply_action(&action) {
-                self.depth += 1;
                 if action.pass {
                     if self.has_passed {
                         // 2連続パスなのでゲーム終了
@@ -50,6 +50,8 @@ where
                 } else {
                     self.has_passed = false;
                 }
+
+                self.depth += 1;
             }
         }
     }
@@ -61,6 +63,7 @@ mod tests {
     use crate::action::Action;
     use crate::board::Square;
     use crate::board::BOARD_SIZE;
+    use crate::Squares;
 
     struct Test1Player {}
 
@@ -71,11 +74,7 @@ mod tests {
     }
 
     impl Player for Test1Player {
-        fn take_action(
-            &mut self,
-            depth: u32,
-            squares: [[Square; BOARD_SIZE]; BOARD_SIZE],
-        ) -> Action {
+        fn take_action(&mut self, depth: u32, squares: &Squares) -> Action {
             let color = if depth % 2 == 0 {
                 Square::Black
             } else {
@@ -83,7 +82,7 @@ mod tests {
             };
 
             let mut board = Board::new();
-            board.squares = squares;
+            board.squares = squares.clone();
             let positions = board.get_movable_positions(color);
 
             if positions.len() == 0 {
@@ -104,11 +103,7 @@ mod tests {
     }
 
     impl Player for Test2Player {
-        fn take_action(
-            &mut self,
-            depth: u32,
-            squares: [[Square; BOARD_SIZE]; BOARD_SIZE],
-        ) -> Action {
+        fn take_action(&mut self, depth: u32, _: &Squares) -> Action {
             let color = if depth % 2 == 0 {
                 Square::Black
             } else {
@@ -142,6 +137,6 @@ mod tests {
         let mut reversi = Reversi::new(black, white);
         reversi.run();
 
-        assert_eq!(12, reversi.depth)
+        assert_eq!(11, reversi.depth)
     }
 }

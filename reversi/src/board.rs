@@ -3,7 +3,7 @@ use crate::indexer::FlipInfo;
 use crate::indexer::Indexer;
 
 pub const BOARD_SIZE: usize = 8;
-pub type Squares = [[Square; BOARD_SIZE]; BOARD_SIZE];
+pub type Squares = Vec<Vec<Square>>;
 
 /// 方向
 pub enum LineDirection {
@@ -30,7 +30,13 @@ pub struct Board {
 impl Board {
     /// 新規作成
     pub fn new() -> Board {
-        let mut squares = [[Square::Empty; BOARD_SIZE]; BOARD_SIZE];
+        let mut squares = Squares::new();
+        for r in 0..BOARD_SIZE {
+            squares.push(Vec::new());
+            for c in 0..BOARD_SIZE {
+                squares[r].push(Square::Empty);
+            }
+        }
         squares[3][4] = Square::Black;
         squares[4][3] = Square::Black;
         squares[3][3] = Square::White;
@@ -169,18 +175,23 @@ impl Board {
         (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo)
     }
 
-    fn get_line(&self, row: usize, col: usize, dir: LineDirection) -> [Square; BOARD_SIZE] {
+    fn get_line(&self, row: usize, col: usize, dir: LineDirection) -> Vec<Square> {
+        let mut line = Vec::new();
+        for i in 0..BOARD_SIZE {
+            line.push(Square::Empty);
+        }
         match dir {
-            LineDirection::Left2Right => self.squares[row],
+            LineDirection::Left2Right => {
+                line = self.squares[row].clone();
+                line
+            }
             LineDirection::Top2Bottom => {
-                let mut line = [Square::Empty; BOARD_SIZE];
                 for i in 0..BOARD_SIZE {
                     line[i] = self.squares[i][col];
                 }
                 line
             }
             LineDirection::TopLeft2BottomRight => {
-                let mut line = [Square::Empty; BOARD_SIZE];
                 let row = row as i32;
                 let col = col as i32;
                 let mut r = (row - col).max(0) as usize;
@@ -196,7 +207,6 @@ impl Board {
                 line
             }
             LineDirection::BottomLeft2TopRight => {
-                let mut line = [Square::Empty; BOARD_SIZE];
                 let row = row as i32;
                 let col = col as i32;
                 let mut r = (row + col).min(BOARD_SIZE as i32 - 1);

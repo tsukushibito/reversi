@@ -21,8 +21,8 @@ struct MobilityInfo {
 const INDEX_COUNT: usize = 3_u32.pow(BOARD_SIZE as u32) as usize;
 
 pub struct Indexer {
-    mobility_table_for_black: [MobilityInfo; INDEX_COUNT],
-    mobility_table_for_white: [MobilityInfo; INDEX_COUNT],
+    mobility_table_for_black: Vec<MobilityInfo>,
+    mobility_table_for_white: Vec<MobilityInfo>,
 }
 
 impl Indexer {
@@ -33,16 +33,11 @@ impl Indexer {
         }
     }
 
-    pub fn get_flip_info(
-        &self,
-        color: Square,
-        line: &[Square; BOARD_SIZE],
-        pos: usize,
-    ) -> FlipInfo {
+    pub fn get_flip_info(&self, color: Square, line: &[Square], pos: usize) -> FlipInfo {
         let index = line_to_index(line);
         let table = match color {
-            Square::Black => self.mobility_table_for_black,
-            Square::White => self.mobility_table_for_white,
+            Square::Black => &self.mobility_table_for_black,
+            Square::White => &self.mobility_table_for_white,
             _ => panic!(),
         };
 
@@ -50,10 +45,13 @@ impl Indexer {
     }
 }
 
-fn index_to_line(index: usize) -> [Square; BOARD_SIZE] {
-    let mut line = [Square::Empty; BOARD_SIZE];
-    let mut i = index;
+fn index_to_line(index: usize) -> Vec<Square> {
+    let mut line = Vec::new();
+    for i in 0..BOARD_SIZE {
+        line.push(Square::Empty);
+    }
 
+    let mut i = index;
     for n in 0..BOARD_SIZE {
         line[n] = match i % 3 {
             0 => Square::White,
@@ -67,7 +65,7 @@ fn index_to_line(index: usize) -> [Square; BOARD_SIZE] {
     line
 }
 
-fn line_to_index(line: &[Square; BOARD_SIZE]) -> usize {
+fn line_to_index(line: &[Square]) -> usize {
     let mut index = 0;
 
     for n in 0..BOARD_SIZE {
@@ -78,7 +76,7 @@ fn line_to_index(line: &[Square; BOARD_SIZE]) -> usize {
     index as usize
 }
 
-fn create_mobility_table(color: Square) -> [MobilityInfo; INDEX_COUNT] {
+fn create_mobility_table(color: Square) -> Vec<MobilityInfo> {
     if matches!(color, Square::Empty) {
         panic!();
     }
@@ -89,7 +87,10 @@ fn create_mobility_table(color: Square) -> [MobilityInfo; INDEX_COUNT] {
         _ => panic!(),
     };
 
-    let mut table = [MobilityInfo::default(); INDEX_COUNT];
+    let mut table = Vec::new();
+    for _ in 0..INDEX_COUNT {
+        table.push(MobilityInfo::default());
+    }
 
     for i in 0..INDEX_COUNT {
         let info = &mut table[i];

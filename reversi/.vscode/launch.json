@@ -22,6 +22,43 @@
             },
             "args": [],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'reversi'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=reversi",
+                    "--package=reversi"
+                ],
+                "filter": {
+                    "name": "reversi",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'reversi'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=reversi",
+                    "--package=reversi"
+                ],
+                "filter": {
+                    "name": "reversi",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
