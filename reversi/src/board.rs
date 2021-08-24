@@ -175,6 +175,83 @@ impl Board {
         (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo)
     }
 
+    fn get_flip_infos_test(
+        &self,
+        color: Square,
+        row: usize,
+        col: usize,
+    ) -> (FlipInfo, FlipInfo, FlipInfo, FlipInfo) {
+        if self.squares[row][col] != Square::Empty {
+            let no_flip = FlipInfo {
+                lower: 0,
+                higher: 0,
+            };
+            return (no_flip, no_flip, no_flip, no_flip);
+        }
+
+        let mut l2r_finfo = FlipInfo {
+            lower: 0,
+            higher: 0,
+        };
+        let mut t2b_finfo = FlipInfo {
+            lower: 0,
+            higher: 0,
+        };
+        let mut tl2br_finfo = FlipInfo {
+            lower: 0,
+            higher: 0,
+        };
+        let mut bl2tr_finfo = FlipInfo {
+            lower: 0,
+            higher: 0,
+        };
+        let dir_table = [
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (-1, 0),
+            (1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
+        ];
+        for (index, (dr, dc)) in dir_table.iter().enumerate() {
+            let mut r_iter = row as i32 + dr;
+            let mut c_iter = col as i32 + dc;
+            let opponent = if color == Square::Black {
+                Square::White
+            } else {
+                Square::Black
+            };
+            while self.squares[r_iter as usize][c_iter as usize] == opponent {
+                r_iter += dr;
+                c_iter += dc;
+                if r_iter < 0 || c_iter < 0 {
+                    break;
+                }
+            }
+            let dr = (r_iter - row as i32).abs();
+            let dc = (c_iter - col as i32).abs();
+            let distance = if dr > dc { dr } else { dc };
+            if self.squares[r_iter as usize][c_iter as usize] == color && distance > 2 {
+                match index {
+                    0 => tl2br_finfo.lower = (distance - 1) as u8,
+                    1 => tl2br_finfo.lower = (distance - 1) as u8,
+                    2 => tl2br_finfo.lower = (distance - 1) as u8,
+                    3 => tl2br_finfo.lower = (distance - 1) as u8,
+                    4 => tl2br_finfo.lower = (distance - 1) as u8,
+                    5 => tl2br_finfo.lower = (distance - 1) as u8,
+                    6 => tl2br_finfo.lower = (distance - 1) as u8,
+                    7 => tl2br_finfo.lower = (distance - 1) as u8,
+                    8 => tl2br_finfo.lower = (distance - 1) as u8,
+                    _ => tl2br_finfo.lower = (distance - 1) as u8,
+                }
+            }
+        }
+
+        (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo)
+    }
+
     fn get_line(&self, row: usize, col: usize, dir: LineDirection) -> Vec<Square> {
         let mut line = Vec::new();
         for i in 0..BOARD_SIZE {
