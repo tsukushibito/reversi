@@ -1,5 +1,6 @@
 use crate::board::Square;
 
+#[derive(PartialEq, Eq, Hash)]
 pub struct Action {
     pub color: Square,
     pub row: usize,

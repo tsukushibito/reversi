@@ -5,9 +5,9 @@
 		},
 		{
 			"path": "./reversi"
+		},
+		{
+			"path": "./reversi_ai"
 		}
 	],
-	"settings": {
-		"python.testing.unittestEnabled": true
-	}
 }

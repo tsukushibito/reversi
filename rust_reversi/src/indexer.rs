@@ -47,7 +47,7 @@ impl Indexer {
 
 fn index_to_line(index: usize) -> Vec<Square> {
     let mut line = Vec::new();
-    for i in 0..BOARD_SIZE {
+    for _ in 0..BOARD_SIZE {
         line.push(Square::Empty);
     }
 

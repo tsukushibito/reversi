@@ -1,4 +1,5 @@
 use crate::board::Board;
+use crate::indexer::Indexer;
 use crate::player::Player;
 
 pub struct Reversi<T, U>
@@ -19,8 +20,7 @@ where
     U: Player,
 {
     pub fn new(black_player: T, white_player: U) -> Reversi<T, U> {
-        println!("{}", crate::BOARD_SIZE);
-        let board = Board::new();
+        let board = Board::new_initial();
         Reversi {
             board: board,
             black_player: black_player,
@@ -40,18 +40,22 @@ where
                     .take_action(self.depth, &self.board.squares)
             };
 
-            if self.board.apply_action(&action) {
-                if action.pass {
-                    if self.has_passed {
-                        // 2連続パスなのでゲーム終了
-                        break;
+            match self.board.apply_action(&action) {
+                Some(next_board) => {
+                    if action.pass {
+                        if self.has_passed {
+                            // 2連続パスなのでゲーム終了
+                            break;
+                        }
+                        self.has_passed = true;
+                    } else {
+                        self.has_passed = false;
                     }
-                    self.has_passed = true;
-                } else {
-                    self.has_passed = false;
-                }
 
-                self.depth += 1;
+                    self.depth += 1;
+                    self.board = next_board;
+                }
+                None => {}
             }
         }
     }
@@ -62,14 +66,17 @@ mod tests {
     use super::*;
     use crate::action::Action;
     use crate::board::Square;
-    use crate::board::BOARD_SIZE;
-    use crate::Squares;
+    use crate::board::Squares;
 
-    struct Test1Player {}
+    struct Test1Player {
+        board: Board,
+    }
 
     impl Test1Player {
         fn new() -> Test1Player {
-            Test1Player {}
+            Test1Player {
+                board: Board::new_initial(),
+            }
         }
     }
 
@@ -81,9 +88,8 @@ mod tests {
                 Square::White
             };
 
-            let mut board = Board::new();
-            board.squares = squares.clone();
-            let positions = board.get_movable_positions(color);
+            self.board.squares = squares.clone();
+            let positions = self.board.get_movable_positions(color);
 
             if positions.len() == 0 {
                 return Action::new_pass(color);
