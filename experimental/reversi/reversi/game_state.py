@@ -71,20 +71,46 @@ class GameState:
 
         return actions
 
-    def _opponent_color(self) -> Square:
-        if self.color == Square.EMPTY:
-            raise Exception
-        return Square.BLACK if self.color == Square.WHITE else Square.WHITE
-
     def is_pass(self) -> bool:
         actions = self.valid_actions()
         return len(actions) == 1 and actions[0].is_pass
+
+    def is_end(self) -> bool:
+        if not self.is_pass():
+            return False
+        pass_action = Action(color=self.color, is_pass=True)
+        next_state = self.next_state(pass_action)
+        return next_state.is_pass()
 
     def black_count(self) -> int:
         return self.board.black_count()
 
     def white_count(self) -> int:
         return self.board.white_count()
+
+    def black_squares(self) -> List[int]:
+        return self.board.black_squares()
+
+    def white_squares(self) -> List[int]:
+        return self.board.white_squares()
+
+    def to_string(self) -> str:
+        lines = [f'[{self.depth}, {self.color}]',
+                 '   a b c d e f g h ', '   ----------------']
+        for r in range(Board.BOARD_SIZE):
+            items = [f'{r + 1}|']
+            for c in range(Board.BOARD_SIZE):
+                s = self.board[r, c]
+                items.append(
+                    'b' if s == Square.BLACK else 'w' if s == Square.WHITE else '.')
+            line = ' '.join(items)
+            lines.append(line)
+        return '\n'.join(lines)
+
+    def _opponent_color(self) -> Square:
+        if self.color == Square.EMPTY:
+            raise Exception
+        return Square.BLACK if self.color == Square.WHITE else Square.WHITE
 
     def _get_flip_info(self, action: Action) -> Dict[BoardDir, int]:
         info: Dict[BoardDir, int] = {
@@ -127,16 +153,3 @@ class GameState:
             info[dir] = distance - 1
 
         return info
-
-    def to_string(self) -> str:
-        lines = [f'[{self.depth}, {self.color}]',
-                 '   a b c d e f g h ', '   ----------------']
-        for r in range(Board.BOARD_SIZE):
-            items = [f'{r + 1}|']
-            for c in range(Board.BOARD_SIZE):
-                s = self.board[r, c]
-                items.append(
-                    'b' if s == Square.BLACK else 'w' if s == Square.WHITE else '.')
-            line = ' '.join(items)
-            lines.append(line)
-        return '\n'.join(lines)

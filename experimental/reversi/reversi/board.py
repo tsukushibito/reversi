@@ -23,7 +23,8 @@ class Board:
     def __setitem__(self, pos, s):
         self.squares[pos[0]][pos[1]] = s
 
-    def initial() -> 'Board':
+    @classmethod
+    def initial(cls) -> 'Board':
         squares = [[Square.EMPTY] *
                    Board.BOARD_SIZE for i in range(Board.BOARD_SIZE)]
 
@@ -52,3 +53,13 @@ class Board:
 
     def white_count(self) -> int:
         return self.count_of(Square.WHITE)
+
+    def squares_of(self, square: Square) -> List[int]:
+        return list(map(lambda s: 1 if s == square else 0,
+                        chain.from_iterable(self.squares)))
+
+    def black_squares(self) -> List[int]:
+        return self.squares_of(Square.BLACK)
+
+    def white_squares(self) -> List[int]:
+        return self.squares_of(Square.WHITE)

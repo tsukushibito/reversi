@@ -21,7 +21,6 @@ class Game:
         self.state: GameState = GameState(Board.initial())
 
     def run(self) -> GameResult:
-        is_passed: bool = False
         while True:
             player: Player = \
                 self._black_player if self.state.depth // 2 == 0 else self._white_player
@@ -35,13 +34,15 @@ class Game:
 
             self.state = next_state
 
-            if is_passed and action.is_pass:
+            if self.state.is_end():
                 break
-
-            is_passed = action.is_pass
 
         black_count = self.state.black_count()
         white_count = self.state.white_count()
+
+        print('[end]')
+        print(self.state.to_string())
+
         return GameResult(
             depth=self.state.depth,
             black=black_count,

@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 reversi = {path = "../reversi", editable = true}
+numpy = "*"
 
 [dev-packages]
 pylint = "*"

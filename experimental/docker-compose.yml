@@ -1,10 +1,28 @@
 ﻿version: '3'
 services:
+  tensorflow_build:
+    build:
+      context: '.'
+      dockerfile: 'Dockerfile.tensorflow'
+    container_name: 'tensorflow_build'
+    volumes:
+      - python-packages:/root/.local/share:cached
+      - tensorflow_src:/tensorflow_src:cached
+      - tensorflow_pkg:/tmp/tensorflow_pkg:cached
+      - h5py_src:/h5py_src:cached
+      - h5py_pkg:/tmp/h5py_pkg:cached
+
   dev:
-    build: .
+    build: '.'
     container_name: 'dev'
     volumes:
-      - python-packages:/root/.local/share
+      - python-packages:/root/.local/share:cached
+      - tensorflow_pkg:/tmp/tensorflow_pkg:cached
+
 
 volumes:
   python-packages:
+  tensorflow_src:
+  tensorflow_pkg:
+  h5py_src:
+  h5py_pkg:
