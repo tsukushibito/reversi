@@ -3,14 +3,13 @@ from typing import Dict, List
 import copy
 
 from reversi.board import *
+from reversi.move import Move
 
 
 @dataclass(frozen=True)
 class Action:
     color: Square = Square.BLACK
-    row: int = 0
-    col: int = 0
-    is_pass: bool = False
+    move: Move = Move.PASS
 
 
 class BoardDir(Enum):
@@ -34,7 +33,7 @@ class GameState:
         if action.color != self.color:
             return None
 
-        if action.is_pass:
+        if action.move == Move.PASS:
             if self.is_pass():
                 board = copy.deepcopy(self.board)
                 return GameState(board, self._opponent_color(), self.depth + 1)
@@ -46,10 +45,11 @@ class GameState:
             return None
 
         board: Board = copy.deepcopy(self.board)
-        board[action.row, action.col] = action.color
+        row, col = action.move.value
+        board[row, col] = action.color
         for dir in BoardDir:
-            ir = action.row + dir.value[0]
-            ic = action.col + dir.value[1]
+            ir = row + dir.value[0]
+            ic = col + dir.value[1]
             for _ in range(info[dir]):
                 board[ir, ic] = action.color
                 ir = ir + dir.value[0]
@@ -61,24 +61,24 @@ class GameState:
         actions: List[Action] = []
         for r in range(Board.BOARD_SIZE):
             for c in range(Board.BOARD_SIZE):
-                action = Action(color=self.color, row=r, col=c)
+                action = Action(color=self.color, move=Move.from_row_col(r, c))
                 info: Dict[BoardDir, int] = self._get_flip_info(action)
                 if sum(info.values()) > 0:
                     actions.append(action)
 
         if len(actions) == 0:
-            actions.append(Action(color=self.color, is_pass=True))
+            actions.append(Action(color=self.color, move=Move.PASS))
 
         return actions
 
     def is_pass(self) -> bool:
         actions = self.valid_actions()
-        return len(actions) == 1 and actions[0].is_pass
+        return len(actions) == 1 and actions[0].move == Move.PASS
 
     def is_end(self) -> bool:
         if not self.is_pass():
             return False
-        pass_action = Action(color=self.color, is_pass=True)
+        pass_action = Action(color=self.color, move=Move.PASS)
         next_state = self.next_state(pass_action)
         return next_state.is_pass()
 
@@ -107,6 +107,20 @@ class GameState:
             lines.append(line)
         return '\n'.join(lines)
 
+    def equals_to(self, other: 'GameState') -> bool:
+        if self.color != other.color or self.depth != other.depth:
+            return False
+
+        if self.board is None and other.board is None:
+            return True
+
+        if self.board is None or other.board is None:
+            return False
+
+        self_squares = list(chain.from_iterable(self.board.squares))
+        other_squares = list(chain.from_iterable(other.board.squares))
+        return self_squares == other_squares
+
     def _opponent_color(self) -> Square:
         if self.color == Square.EMPTY:
             raise Exception
@@ -124,18 +138,19 @@ class GameState:
             BoardDir.DOWN_RIGHT: 0,
         }
 
-        if action.is_pass:
+        if action.move == Move.PASS:
             return info
 
-        if not Board.is_valid_position(action.row, action.col):
+        row, col = action.move.value
+        if not Board.is_valid_position(row, col):
             return info
 
-        if self.board[action.row, action.col] != Square.EMPTY:
+        if self.board[row, col] != Square.EMPTY:
             return info
 
         for dir in BoardDir:
-            ir: int = action.row + dir.value[0]
-            ic: int = action.col + dir.value[1]
+            ir: int = row + dir.value[0]
+            ic: int = col + dir.value[1]
 
             opponent = Square.BLACK if action.color == Square.WHITE else Square.WHITE
 
@@ -146,8 +161,8 @@ class GameState:
             if not Board.is_valid_position(ir, ic) or self.board[ir, ic] != self.color:
                 continue
 
-            dr: int = abs(ir - action.row)
-            dc: int = abs(ic - action.col)
+            dr: int = abs(ir - row)
+            dc: int = abs(ic - col)
             distance: int = dr if dr >= dc else dc
 
             info[dir] = distance - 1

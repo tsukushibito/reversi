@@ -1,21 +1,21 @@
 import unittest
-from reversi import GameState, Action, Square, Game, Player
+from reversi import GameState, Action, Square, Game, Player, Move
 
 
 class TestPlayer(Player):
     def __init__(self):
         self.action_table = [
-            Action(Square.BLACK, 4, 5),
-            Action(Square.WHITE, 5, 3),
-            Action(Square.BLACK, 4, 2),
-            Action(Square.WHITE, 3, 5),
-            Action(Square.BLACK, 6, 4),
-            Action(Square.WHITE, 5, 5),
-            Action(Square.BLACK, 4, 6),
-            Action(Square.WHITE, 5, 4),
-            Action(Square.BLACK, 2, 4),
-            Action(color=Square.WHITE, is_pass=True),
-            Action(color=Square.BLACK, is_pass=True),
+            Action(color=Square.BLACK, move=Move((4, 5))),
+            Action(color=Square.WHITE, move=Move((5, 3))),
+            Action(color=Square.BLACK, move=Move((4, 2))),
+            Action(color=Square.WHITE, move=Move((3, 5))),
+            Action(color=Square.BLACK, move=Move((6, 4))),
+            Action(color=Square.WHITE, move=Move((5, 5))),
+            Action(color=Square.BLACK, move=Move((4, 6))),
+            Action(color=Square.WHITE, move=Move((5, 4))),
+            Action(color=Square.BLACK, move=Move((2, 4))),
+            Action(color=Square.WHITE, move=Move.PASS),
+            Action(color=Square.BLACK, move=Move.PASS),
         ]
 
     def take_action(self, state: GameState) -> Action:

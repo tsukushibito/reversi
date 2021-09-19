@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import random
 
 from reversi.game_state import Action, GameState
 
@@ -7,6 +8,13 @@ class Player(ABC):
     @abstractmethod
     def take_action(self, state: GameState) -> Action:
         pass
+
+
+class RandomPlayer(Player):
+    def take_action(self, state: GameState) -> Action:
+        actions = state.valid_actions()
+        action = random.choice(actions)
+        return action
 
 
 class TerminalPlayer(Player):

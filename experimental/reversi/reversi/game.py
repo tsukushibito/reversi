@@ -23,7 +23,7 @@ class Game:
     def run(self) -> GameResult:
         while True:
             player: Player = \
-                self._black_player if self.state.depth // 2 == 0 else self._white_player
+                self._black_player if self.state.depth % 2 == 0 else self._white_player
             action: Action = player.take_action(self.state)
             if action == None:
                 raise Exception('Player.take_action returned None object')

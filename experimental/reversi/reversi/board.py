@@ -41,12 +41,7 @@ class Board:
             and col >= 0 and col < Board.BOARD_SIZE
 
     def count_of(self, square: Square) -> int:
-        return len(
-            list(
-                filter(lambda s: s == square,
-                       chain.from_iterable(self.squares))
-            )
-        )
+        return len([s for s in chain.from_iterable(self.squares) if s == square])
 
     def black_count(self) -> int:
         return self.count_of(Square.BLACK)
@@ -55,8 +50,8 @@ class Board:
         return self.count_of(Square.WHITE)
 
     def squares_of(self, square: Square) -> List[int]:
-        return list(map(lambda s: 1 if s == square else 0,
-                        chain.from_iterable(self.squares)))
+        return [1 if s == square else 0
+                for s in chain.from_iterable(self.squares)]
 
     def black_squares(self) -> List[int]:
         return self.squares_of(Square.BLACK)

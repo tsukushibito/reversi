@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import List, Tuple
 
 import numpy as np
@@ -5,11 +6,19 @@ import tensorflow as tf
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 
-from reversi import Board, Square, GameState
+from reversi import Board, Square, GameState, Move
 
 from reversi_ai.resnet_block import ResnetBlock
 
 import os
+
+
+@dataclass
+class TrainingData:
+    squares: List[int]
+    opponent_squares: List[int]
+    policies: List[float]
+    value: float
 
 
 class DualNetwork:
@@ -101,14 +110,16 @@ class DualNetwork:
 
         # 方策の取得
         valid_actions = state.valid_actions()
-        valid_positions = list(map(lambda a:
-                                   Board.BOARD_SIZE * a.row + a.col
-                                   if not a.is_pass
-                                   else Board.BOARD_SIZE * Board.BOARD_SIZE + 1,
-                                   valid_actions))
+        valid_positions = [Board.BOARD_SIZE * a.move.value[0] + a.move.value[1]
+                           if a.move != Move.PASS
+                           else Board.BOARD_SIZE * Board.BOARD_SIZE
+                           for a in valid_actions]
         policies = y[DualNetwork.POLICIES_INDEX][0][valid_positions]  # 合法手のみ
         policies /= sum(policies) if sum(policies) else 1  # 合計1の確率分布に変換
 
         # 価値の取得
         value = y[DualNetwork.VALUE_INDEX][0][0]
         return policies, value
+
+    def training(self, datas: List[TrainingData]):
+        pass

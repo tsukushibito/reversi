@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from typing import ClassVar, Dict, List
 from math import sqrt
+import random
 
 import numpy as np
 
 from reversi import Square, GameState
+from reversi.game_state import Action
 from reversi_ai import DualNetwork
 
 
@@ -23,9 +25,27 @@ class MctsTreeNode:
 
     state: GameState = None
     children: List['MctsTreeNode'] = None
+    actions: List[Action] = None
     policy: float = 0.0
     weight: float = 0.0
     evaluated_count: int = 0
+
+    def new(state: GameState, policy: float = 0) -> 'MctsTreeNode':
+        return MctsTreeNode(state=state,
+                            children=None,
+                            actions=state.valid_actions(),
+                            policy=policy,
+                            weight=0,
+                            evaluated_count=0)
+
+
+@dataclass
+class SearchResult:
+    scores: List[float] = None
+    actions: List[Action] = None
+
+    def select_action(self) -> Action:
+        return np.random.choice(self.actions, p=self.scores)
 
 
 class Mcts:
@@ -44,9 +64,33 @@ class Mcts:
         """
         self._dual_network: DualNetwork = dual_network
 
-    def search(self, node: MctsTreeNode) -> MctsTreeNode:
-        self._evaluate_node(node)
-        return node.children[0]  # 仮実装
+    def search(self, node: MctsTreeNode, evaluation_count: int, temperature: float) -> SearchResult:
+        """探索しスコアとアクションを返す
+
+        Args:
+            node (MctsTreeNode): 探索開始ノード
+            evaluation_count (int): 評価回数
+            temperature (float): ばらつき分布用温度パラメータ
+
+        Returns:
+            SearchResult: 探索結果
+        """
+        for _ in range(evaluation_count):
+            self._evaluate_node(node)
+
+        scores = [c.evaluated_count for c in node.children]
+
+        if temperature == 0:
+            # 最大値のみ1でそれ以外は0
+            index = np.argmax(scores)
+            scores = np.zeros(len(scores))
+            scores[index] = 1
+        else:
+            # ボルツマン分布でばらつき付与
+            scores = [s ** (1 / temperature) for s in scores]
+            scores = [s / sum(scores) for s in scores]
+
+        return SearchResult(scores=scores, actions=node.actions)
 
     def _evaluate_node(self, node: MctsTreeNode) -> float:
         """ノードを評価
@@ -79,11 +123,10 @@ class Mcts:
             policies, value = self._dual_network.predict(node.state)
 
             # 子ノードの展開
-            node.children = list(
-                map(lambda action, policy:
-                    MctsTreeNode(state=node.state.next_state(
-                        action), policy=policy),
-                    node.state.valid_actions(), policies))
+            next_states = [node.state.next_state(
+                action) for action in node.actions]
+            node.children = [MctsTreeNode.new(state=next_state, policy=policy)
+                             for next_state, policy in zip(next_states, policies)]
 
         # 子ノードが存在する時
         else:
@@ -100,12 +143,31 @@ class Mcts:
 
     def _select_next_node(self, nodes: List[MctsTreeNode]) -> MctsTreeNode:
         # アーク評価値の計算
-        t = sum(map(lambda n: n.evaluated_count, nodes))
-        pucb_values = list(map(lambda n:
-                               -n.weight / n.evaluated_count if n.evaluated_count != 0 else 0.0 +
-                               Mcts.C_PUCT * n.policy *
-                               sqrt(t) / (1 + n.evaluated_count),
-                               nodes))
+        t = sum([n.evaluated_count for n in nodes])
+
+        shuffled = random.sample(nodes, len(nodes))
+
+        def pucb_value(node: MctsTreeNode):
+            lhs = -node.weight / node.evaluated_count \
+                if node.evaluated_count != 0 \
+                else 0.0
+            rhs = Mcts.C_PUCT * node.policy * \
+                sqrt(t) / (1 + node.evaluated_count)
+            return lhs * rhs
+
+        pucb_values = list(map(pucb_value, shuffled))
 
         # アーク評価値が最大の子ノードを返す
-        return nodes[np.argmax(pucb_values)]
+        return shuffled[np.argmax(pucb_values)]
+
+
+def expand_node(node: MctsTreeNode, depth: int):
+    if node.children is None:
+        next_states = [node.state.next_state(
+            action) for action in node.actions]
+        node.children = [MctsTreeNode.new(
+            state=next_state, policy=0) for next_state in next_states]
+    depth = depth - 1
+    if depth > 0:
+        for c in node.children:
+            expand_node(c, depth)

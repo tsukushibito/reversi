@@ -1,5 +1,5 @@
 import unittest
-from reversi import Board, GameState, Action, Square
+from reversi import Board, GameState, Action, Square, Move
 
 
 class TestGameState(unittest.TestCase):
@@ -9,22 +9,22 @@ class TestGameState(unittest.TestCase):
 
     def test_game_state_next_state_returns_None_if_action_is_invalid(self):
         next_state = self.state.next_state(
-            Action(color=Square.WHITE, row=0, col=0, is_pass=False))
+            Action(color=Square.WHITE, move=Move.A1))
         self.assertIsNone(next_state)
 
         next_state = self.state.next_state(
-            Action(color=Square.BLACK, row=0, col=0, is_pass=False))
+            Action(color=Square.BLACK, move=Move.A1))
         self.assertIsNone(next_state)
 
         next_state = self.state.next_state(
-            Action(color=Square.BLACK, row=0, col=0, is_pass=True))
+            Action(color=Square.BLACK, move=Move.PASS))
         self.assertIsNone(next_state)
 
     def test_game_state_next_state_returns_next_state_if_action_is_valid(self):
         print(self.state.to_string())
 
         next_state = self.state.next_state(
-            Action(color=Square.BLACK, row=2, col=3))
+            Action(color=Square.BLACK, move=Move.D3))
 
         print(next_state.to_string())
 
