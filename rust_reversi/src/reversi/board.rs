@@ -1,6 +1,6 @@
-﻿use crate::action::Action;
-use crate::indexer::FlipInfo;
-use crate::indexer::Indexer;
+﻿use super::action::Action;
+use super::indexer::FlipInfo;
+use super::indexer::Indexer;
 use std::rc::Rc;
 
 pub const BOARD_SIZE: usize = 8;
@@ -184,7 +184,7 @@ impl Board {
         color: Square,
         row: usize,
         col: usize,
-    ) -> (FlipInfo, FlipInfo, FlipInfo, FlipInfo) {
+    ) -> (&FlipInfo, &FlipInfo, &FlipInfo, &FlipInfo) {
         // 左右方向の情報
         let l2r = self.get_line(row, col, LineDirection::Left2Right);
         let l2r_finfo = self.indexer.get_flip_info(color, &l2r, col);
@@ -320,7 +320,7 @@ mod tests {
 
     #[test]
     fn test_apply_action() {
-        let mut board = Board::new_initial();
+        let board = Board::new_initial();
 
         let act = Action::new_move(Square::Black, 0, 0);
         let r = board.apply_action(&act);

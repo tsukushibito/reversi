@@ -1,7 +1,7 @@
 ﻿use crate::board::Square;
 use crate::board::BOARD_SIZE;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Default)]
 pub struct FlipInfo {
     pub lower: u8,
     pub higher: u8,
@@ -13,7 +13,7 @@ impl FlipInfo {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Default)]
 struct MobilityInfo {
     pub flip_infos: [FlipInfo; BOARD_SIZE],
 }
@@ -21,27 +21,27 @@ struct MobilityInfo {
 const INDEX_COUNT: usize = 3_u32.pow(BOARD_SIZE as u32) as usize;
 
 pub struct Indexer {
-    mobility_table_for_black: Vec<MobilityInfo>,
-    mobility_table_for_white: Vec<MobilityInfo>,
+    black_mobility_table: Vec<MobilityInfo>,
+    white_mobility_table: Vec<MobilityInfo>,
 }
 
 impl Indexer {
     pub fn new() -> Indexer {
         Indexer {
-            mobility_table_for_black: create_mobility_table(Square::Black),
-            mobility_table_for_white: create_mobility_table(Square::White),
+            black_mobility_table: create_mobility_table(Square::Black),
+            white_mobility_table: create_mobility_table(Square::White),
         }
     }
 
-    pub fn get_flip_info(&self, color: Square, line: &[Square], pos: usize) -> FlipInfo {
+    pub fn get_flip_info(&self, color: Square, line: &[Square], pos: usize) -> &FlipInfo {
         let index = line_to_index(line);
         let table = match color {
-            Square::Black => &self.mobility_table_for_black,
-            Square::White => &self.mobility_table_for_white,
+            Square::Black => &self.black_mobility_table,
+            Square::White => &self.white_mobility_table,
             _ => panic!(),
         };
 
-        table[index].flip_infos[pos]
+        &table[index].flip_infos[pos]
     }
 }
 
@@ -66,14 +66,10 @@ fn index_to_line(index: usize) -> Vec<Square> {
 }
 
 fn line_to_index(line: &[Square]) -> usize {
-    let mut index = 0;
-
-    for n in 0..BOARD_SIZE {
-        let num = line[n] as u32;
-        index += 3_u32.pow(n as u32) * num;
-    }
-
-    index as usize
+    line.iter().enumerate().fold(0, |index, (i, s)| {
+        let num = (*s) as u32;
+        index + 3_u32.pow(i as u32) * num
+    }) as usize
 }
 
 fn create_mobility_table(color: Square) -> Vec<MobilityInfo> {
@@ -130,6 +126,7 @@ fn create_mobility_table(color: Square) -> Vec<MobilityInfo> {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -159,7 +156,7 @@ mod tests {
     fn test_index_to_line() {
         let line = index_to_line(0);
         for s in line {
-            assert!(matches!(Square::Empty, s));
+            assert!(matches!(s, Square::White));
         }
 
         let line1 = [
@@ -176,7 +173,7 @@ mod tests {
         let line2 = index_to_line(index);
 
         for (s1, s2) in line1.iter().zip(line2.iter()) {
-            assert!(matches!(s1, s2));
+            assert!(s1 == s2);
         }
     }
 

@@ -1,6 +1,4 @@
-use crate::Action;
-use crate::Board;
-use std::collections::HashMap;
+use super::board::Board;
 
 const C_PUCT: f32 = 1.0;
 

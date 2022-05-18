@@ -1,13 +1,9 @@
-mod action;
-mod board;
-mod game_tree;
-mod indexer;
-mod player;
 mod reversi;
 
-pub use action::*;
-pub use board::*;
-pub use game_tree::*;
-pub use indexer::*;
-pub use player::*;
-pub use reversi::*;
+pub use crate::reversi::action;
+pub use crate::reversi::ai_player;
+pub use crate::reversi::board;
+pub use crate::reversi::game;
+// pub use crate::reversi::game_tree;
+pub use crate::reversi::indexer;
+pub use crate::reversi::player;

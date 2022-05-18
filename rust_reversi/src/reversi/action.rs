@@ -1,4 +1,4 @@
-use crate::board::Square;
+use super::board::Square;
 
 #[derive(PartialEq, Eq, Hash)]
 pub struct Action {

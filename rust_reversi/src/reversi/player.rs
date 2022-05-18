@@ -1,6 +1,6 @@
-use crate::action::Action;
-use crate::board::Square;
-use crate::board::Squares;
+use super::action::Action;
+use super::board::Square;
+use super::board::Squares;
 
 pub trait Player {
     fn take_action(&mut self, depth: u32, squares: &Squares) -> Action;

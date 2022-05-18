@@ -26,16 +26,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'reversi'",
+            "name": "Debug example 'example'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=reversi",
+                    "--example=example",
                     "--package=reversi"
                 ],
                 "filter": {
-                    "name": "reversi",
-                    "kind": "bin"
+                    "name": "example",
+                    "kind": "example"
                 }
             },
             "args": [],
@@ -44,17 +44,17 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'reversi'",
+            "name": "Debug unit tests in example 'example'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=reversi",
+                    "--example=example",
                     "--package=reversi"
                 ],
                 "filter": {
-                    "name": "reversi",
-                    "kind": "bin"
+                    "name": "example",
+                    "kind": "example"
                 }
             },
             "args": [],

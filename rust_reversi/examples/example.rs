@@ -1,9 +1,9 @@
-﻿use reversi::ConsoleIoPlayer;
-use reversi::Reversi;
+﻿use reversi::game::Game;
+use reversi::player::ConsoleIoPlayer;
 
 fn main() {
     let black_player = ConsoleIoPlayer::new();
     let white_player = ConsoleIoPlayer::new();
-    let mut reversi = Reversi::new(black_player, white_player);
+    let mut reversi = Game::new(black_player, white_player);
     reversi.run();
 }
