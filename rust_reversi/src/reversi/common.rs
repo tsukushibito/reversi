@@ -2,27 +2,28 @@ use std::rc::Rc;
 
 pub const BOARD_SIZE: usize = 8;
 
+/// 位置
+/// (行, 列)のタプル
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Position(pub usize, pub usize);
+
+#[derive(PartialEq, Eq, Hash)]
+pub enum ActionType {
+    Move(Position),
+    Pass,
+}
+
 #[derive(PartialEq, Eq, Hash)]
 pub struct Action {
     pub color: Square,
-    pub position: BoardPosition,
-    pub pass: bool,
+    pub action: ActionType,
 }
 
 impl Action {
-    pub fn new_move(color: Square, position: BoardPosition) -> Action {
+    pub fn new(color: Square, action: ActionType) -> Action {
         Action {
             color: color,
-            position: position,
-            pass: false,
-        }
-    }
-
-    pub fn new_pass(color: Square) -> Action {
-        Action {
-            color: color,
-            position: BoardPosition(0, 0),
-            pass: true,
+            action: action,
         }
     }
 }
@@ -45,12 +46,9 @@ pub enum Square {
     White = 0,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct BoardPosition(pub usize, pub usize);
-
 pub trait Board {
     fn apply_action(&self, action: &Action) -> Option<Rc<dyn Board>>;
-    fn get_movable_positions(&self, color: Square) -> Vec<BoardPosition>;
+    fn get_movable_positions(&self, color: Square) -> Vec<Position>;
     fn is_game_over(&self) -> bool;
     fn square_count(&self, color: Square) -> u32;
     fn black_count(&self) -> u32;

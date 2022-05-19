@@ -42,15 +42,15 @@ impl Player for ConsoleIoPlayer {
             let pos: Vec<char> = input.trim().chars().collect();
             if pos.len() < 2 || pos[0] < 'a' || pos[0] > 'h' || pos[1] < '1' || pos[1] > '8' {
                 if input == "pass" {
-                    break Action::new_pass(color);
+                    break Action::new(color, ActionType::Pass);
                 }
                 println!("Invalid input!");
             } else {
-                let pos = BoardPosition(
+                let pos = Position(
                     pos[1] as usize - '1' as usize,
                     pos[0] as usize - 'a' as usize,
                 );
-                break Action::new_move(color, pos);
+                break Action::new(color, ActionType::Move(pos));
             }
         }
     }

@@ -32,7 +32,7 @@ impl IndexBoard {
     fn get_flip_infos(
         &self,
         color: Square,
-        pos: BoardPosition,
+        pos: Position,
     ) -> (&FlipInfo, &FlipInfo, &FlipInfo, &FlipInfo) {
         // 左右方向の情報
         let l2r = self.get_line(pos, LineDirection::Left2Right);
@@ -61,7 +61,7 @@ impl IndexBoard {
         (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo)
     }
 
-    fn get_line(&self, pos: BoardPosition, dir: LineDirection) -> [Square; BOARD_SIZE] {
+    fn get_line(&self, pos: Position, dir: LineDirection) -> [Square; BOARD_SIZE] {
         let mut line = [Square::Empty; BOARD_SIZE];
         match dir {
             LineDirection::Left2Right => {
@@ -114,96 +114,100 @@ impl IndexBoard {
 
 impl Board for IndexBoard {
     fn apply_action(&self, action: &Action) -> Option<Rc<dyn Board>> {
-        if action.pass {
-            // パスできるかチェック
-            if self.can_pass(action.color) {
-                return Some(Rc::new(self.clone()));
-            } else {
-                return None;
+        match action.action {
+            ActionType::Pass => {
+                // パスできるかチェック
+                if self.can_pass(action.color) {
+                    Some(Rc::new(self.clone()))
+                } else {
+                    None
+                }
             }
-        }
+            ActionType::Move(position) => {
+                if self.squares[position.0][position.1] != Square::Empty {
+                    // 空きマス以外には石を置けない
+                    return None;
+                }
 
-        if self.squares[action.position.0][action.position.1] != Square::Empty {
-            // 空きマス以外には石を置けない
-            return None;
-        }
+                // 各方向の情報取得
+                let (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo) =
+                    self.get_flip_infos(action.color, position);
 
-        // 各方向の情報取得
-        let (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo) =
-            self.get_flip_infos(action.color, action.position);
+                // ひっくり返す石の数
+                let flip_count = l2r_finfo.flip_count()
+                    + t2b_finfo.flip_count()
+                    + tl2br_finfo.flip_count()
+                    + bl2tr_finfo.flip_count();
 
-        // ひっくり返す石の数
-        let flip_count = l2r_finfo.flip_count()
-            + t2b_finfo.flip_count()
-            + tl2br_finfo.flip_count()
-            + bl2tr_finfo.flip_count();
+                // ひっくり返せないなら無効なアクションなので受け付けない
+                if flip_count == 0 {
+                    return None;
+                }
 
-        // ひっくり返せないなら無効なアクションなので受け付けない
-        if flip_count == 0 {
-            return None;
-        }
+                let mut squares = self.squares.clone();
 
-        let mut squares = self.squares.clone();
+                // アクションの箇所に石を置く
+                squares[position.0][position.1] = action.color;
 
-        // アクションの箇所に石を置く
-        squares[action.position.0][action.position.1] = action.color;
+                // 左右方向
+                for p in 1..=l2r_finfo.higher {
+                    let c = position.1 + p as usize;
+                    squares[position.0][c] = action.color;
+                }
+                for p in 1..=l2r_finfo.lower {
+                    let c = position.1 - p as usize;
+                    squares[position.0][c] = action.color;
+                }
 
-        // 左右方向
-        for p in 1..=l2r_finfo.higher {
-            let c = action.position.1 + p as usize;
-            squares[action.position.0][c] = action.color;
-        }
-        for p in 1..=l2r_finfo.lower {
-            let c = action.position.1 - p as usize;
-            squares[action.position.0][c] = action.color;
-        }
+                // 上下方向
+                for p in 1..=t2b_finfo.higher {
+                    let r = position.0 + p as usize;
+                    squares[r][position.1] = action.color;
+                }
+                for p in 1..=t2b_finfo.lower {
+                    let r = position.0 - p as usize;
+                    squares[r][position.1] = action.color;
+                }
 
-        // 上下方向
-        for p in 1..=t2b_finfo.higher {
-            let r = action.position.0 + p as usize;
-            squares[r][action.position.1] = action.color;
-        }
-        for p in 1..=t2b_finfo.lower {
-            let r = action.position.0 - p as usize;
-            squares[r][action.position.1] = action.color;
-        }
+                // 左上右下方向
+                for p in 1..=tl2br_finfo.higher {
+                    let r = position.0 + p as usize;
+                    let c = position.1 + p as usize;
+                    squares[r][c] = action.color;
+                }
+                for p in 1..=tl2br_finfo.lower {
+                    let r = position.0 - p as usize;
+                    let c = position.1 - p as usize;
+                    squares[r][c] = action.color;
+                }
 
-        // 左上右下方向
-        for p in 1..=tl2br_finfo.higher {
-            let r = action.position.0 + p as usize;
-            let c = action.position.1 + p as usize;
-            squares[r][c] = action.color;
-        }
-        for p in 1..=tl2br_finfo.lower {
-            let r = action.position.0 - p as usize;
-            let c = action.position.1 - p as usize;
-            squares[r][c] = action.color;
-        }
+                // 左下右上方向
+                for p in 1..=bl2tr_finfo.higher {
+                    let r = position.0 - p as usize;
+                    let c = position.1 + p as usize;
+                    squares[r][c] = action.color;
+                }
+                for p in 1..=bl2tr_finfo.lower {
+                    let r = position.0 + p as usize;
+                    let c = position.1 - p as usize;
+                    squares[r][c] = action.color;
+                }
 
-        // 左下右上方向
-        for p in 1..=bl2tr_finfo.higher {
-            let r = action.position.0 - p as usize;
-            let c = action.position.1 + p as usize;
-            squares[r][c] = action.color;
+                Some(Rc::new(IndexBoard::new(squares, self.indexer.clone())))
+            }
+            _ => None,
         }
-        for p in 1..=bl2tr_finfo.lower {
-            let r = action.position.0 + p as usize;
-            let c = action.position.1 - p as usize;
-            squares[r][c] = action.color;
-        }
-
-        Some(Rc::new(IndexBoard::new(squares, self.indexer.clone())))
     }
 
-    fn get_movable_positions(&self, color: Square) -> Vec<BoardPosition> {
-        let mut positions: Vec<BoardPosition> = Vec::new();
+    fn get_movable_positions(&self, color: Square) -> Vec<Position> {
+        let mut positions: Vec<Position> = Vec::new();
         for r in 0..BOARD_SIZE {
             for c in 0..BOARD_SIZE {
-                let (l2r, t2b, tl2br, bl2tr) = self.get_flip_infos(color, BoardPosition(r, c));
+                let (l2r, t2b, tl2br, bl2tr) = self.get_flip_infos(color, Position(r, c));
                 let count =
                     l2r.flip_count() + t2b.flip_count() + tl2br.flip_count() + bl2tr.flip_count();
                 if count > 0 {
-                    positions.push(BoardPosition(r, c));
+                    positions.push(Position(r, c));
                 }
             }
         }
@@ -249,13 +253,13 @@ mod tests {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer);
 
-        let line0 = board.get_line(BoardPosition(0, 0), LineDirection::Left2Right);
+        let line0 = board.get_line(Position(0, 0), LineDirection::Left2Right);
         assert!(line0.iter().all(|s| *s == Square::Empty));
 
-        let line1 = board.get_line(BoardPosition(0, 0), LineDirection::Top2Bottom);
+        let line1 = board.get_line(Position(0, 0), LineDirection::Top2Bottom);
         assert!(line1.iter().all(|s| *s == Square::Empty));
 
-        let line2 = board.get_line(BoardPosition(0, 0), LineDirection::TopLeft2BottomRight);
+        let line2 = board.get_line(Position(0, 0), LineDirection::TopLeft2BottomRight);
         assert!(line2[0] == Square::Empty);
         assert!(line2[1] == Square::Empty);
         assert!(line2[2] == Square::Empty);
@@ -265,11 +269,11 @@ mod tests {
         assert!(line2[6] == Square::Empty);
         assert!(line2[7] == Square::Empty);
 
-        let line3 = board.get_line(BoardPosition(0, 0), LineDirection::BottomLeft2TopRight);
+        let line3 = board.get_line(Position(0, 0), LineDirection::BottomLeft2TopRight);
         assert!(line3.iter().all(|s| *s == Square::Empty));
 
         let line4 = board.get_line(
-            BoardPosition(BOARD_SIZE - 1, 0),
+            Position(BOARD_SIZE - 1, 0),
             LineDirection::BottomLeft2TopRight,
         );
         assert!(line4[0] == Square::Empty);
@@ -287,11 +291,11 @@ mod tests {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer);
 
-        let act = Action::new_move(Square::Black, BoardPosition(0, 0));
+        let act = Action::new(Square::Black, ActionType::Move(Position(0, 0)));
         let r = board.apply_action(&act);
         assert!(r.is_none());
 
-        let act = Action::new_move(Square::Black, BoardPosition(2, 3));
+        let act = Action::new(Square::Black, ActionType::Move(Position(2, 3)));
         let r = board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
@@ -301,7 +305,7 @@ mod tests {
         assert!(next_board.squares()[3][4] == Square::Black);
         assert!(next_board.squares()[4][4] == Square::White);
 
-        let act = Action::new_move(Square::White, BoardPosition(2, 2));
+        let act = Action::new(Square::White, ActionType::Move(Position(2, 2)));
         let r = next_board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();

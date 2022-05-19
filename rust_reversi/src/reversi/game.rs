@@ -1,4 +1,5 @@
 use crate::player::Player;
+use crate::ActionType;
 use crate::Board;
 use std::rc::Rc;
 
@@ -41,23 +42,20 @@ where
                     .take_action(self.depth, self.board.squares())
             };
 
-            match self.board.apply_action(&action) {
-                Some(next_board) => {
-                    if action.pass {
-                        if self.has_passed {
-                            // 2連続パスなのでゲーム終了
-                            break;
-                        }
-                        self.has_passed = true;
-                    } else {
-                        self.has_passed = false;
+            if let Some(next_board) = self.board.apply_action(&action) {
+                if let ActionType::Pass = action.action {
+                    if self.has_passed {
+                        // 2連続パスなのでゲーム終了
+                        break;
                     }
-
-                    self.depth += 1;
-                    self.board_history.push(self.board.clone());
-                    self.board = next_board;
+                    self.has_passed = true;
+                } else {
+                    self.has_passed = false;
                 }
-                None => {}
+
+                self.depth += 1;
+                self.board_history.push(self.board.clone());
+                self.board = next_board;
             }
         }
     }
@@ -69,7 +67,7 @@ mod tests {
     use crate::index_board::IndexBoard;
     use crate::indexer::Indexer;
     use crate::Action;
-    use crate::BoardPosition;
+    use crate::Position;
     use crate::Square;
     use crate::Squares;
     use std::rc::Rc;
@@ -99,10 +97,10 @@ mod tests {
             let positions = self.board.get_movable_positions(color);
 
             if positions.len() == 0 {
-                return Action::new_pass(color);
+                return Action::new(color, ActionType::Pass);
             }
 
-            Action::new_move(color, positions[0])
+            Action::new(color, ActionType::Move(positions[0]))
         }
     }
 
@@ -122,17 +120,17 @@ mod tests {
                 Square::White
             };
             match depth {
-                0 => Action::new_move(color, BoardPosition(4, 5)),
-                1 => Action::new_move(color, BoardPosition(5, 5)),
-                2 => Action::new_move(color, BoardPosition(5, 4)),
-                3 => Action::new_move(color, BoardPosition(3, 5)),
-                4 => Action::new_move(color, BoardPosition(2, 4)),
-                5 => Action::new_move(color, BoardPosition(1, 3)),
-                6 => Action::new_move(color, BoardPosition(2, 3)),
-                7 => Action::new_move(color, BoardPosition(5, 3)),
-                8 => Action::new_move(color, BoardPosition(3, 2)),
-                9 => Action::new_move(color, BoardPosition(3, 1)),
-                _ => Action::new_pass(color),
+                0 => Action::new(color, ActionType::Move(Position(4, 5))),
+                1 => Action::new(color, ActionType::Move(Position(5, 5))),
+                2 => Action::new(color, ActionType::Move(Position(5, 4))),
+                3 => Action::new(color, ActionType::Move(Position(3, 5))),
+                4 => Action::new(color, ActionType::Move(Position(2, 4))),
+                5 => Action::new(color, ActionType::Move(Position(1, 3))),
+                6 => Action::new(color, ActionType::Move(Position(2, 3))),
+                7 => Action::new(color, ActionType::Move(Position(5, 3))),
+                8 => Action::new(color, ActionType::Move(Position(3, 2))),
+                9 => Action::new(color, ActionType::Move(Position(3, 1))),
+                _ => Action::new(color, ActionType::Pass),
             }
         }
     }
