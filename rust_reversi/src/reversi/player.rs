@@ -1,6 +1,4 @@
-use super::action::Action;
-use super::board::Square;
-use super::board::Squares;
+use crate::*;
 
 pub trait Player {
     fn take_action(&mut self, depth: u32, squares: &Squares) -> Action;
@@ -48,11 +46,11 @@ impl Player for ConsoleIoPlayer {
                 }
                 println!("Invalid input!");
             } else {
-                break Action::new_move(
-                    color,
+                let pos = BoardPosition(
                     pos[1] as usize - '1' as usize,
                     pos[0] as usize - 'a' as usize,
                 );
+                break Action::new_move(color, pos);
             }
         }
     }

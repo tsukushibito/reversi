@@ -1,6 +1,5 @@
-use super::board::Board;
-use super::player::Player;
-use crate::indexer::Indexer;
+use crate::player::Player;
+use crate::Board;
 use std::rc::Rc;
 
 pub struct Game<T, U>
@@ -8,11 +7,12 @@ where
     T: Player,
     U: Player,
 {
-    board: Board,
+    board: Rc<dyn Board>,
     black_player: T,
     white_player: U,
     depth: u32,
     has_passed: bool,
+    board_history: Vec<Rc<dyn Board>>,
 }
 
 impl<T, U> Game<T, U>
@@ -20,15 +20,14 @@ where
     T: Player,
     U: Player,
 {
-    pub fn new(black_player: T, white_player: U) -> Game<T, U> {
-        let indexer = Rc::new(Indexer::new());
-        let board = Board::new_initial(indexer);
+    pub fn new(initial_board: Rc<dyn Board>, black_player: T, white_player: U) -> Game<T, U> {
         Game {
-            board: board,
+            board: initial_board,
             black_player: black_player,
             white_player: white_player,
             depth: 0,
             has_passed: false,
+            board_history: Default::default(),
         }
     }
 
@@ -36,10 +35,10 @@ where
         loop {
             let action = if self.depth % 2 == 0 {
                 self.black_player
-                    .take_action(self.depth, &self.board.squares)
+                    .take_action(self.depth, self.board.squares())
             } else {
                 self.white_player
-                    .take_action(self.depth, &self.board.squares)
+                    .take_action(self.depth, self.board.squares())
             };
 
             match self.board.apply_action(&action) {
@@ -55,6 +54,7 @@ where
                     }
 
                     self.depth += 1;
+                    self.board_history.push(self.board.clone());
                     self.board = next_board;
                 }
                 None => {}
@@ -65,20 +65,24 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::super::action::Action;
-    use super::super::board::Square;
-    use super::super::board::Squares;
     use super::*;
+    use crate::index_board::IndexBoard;
+    use crate::indexer::Indexer;
+    use crate::Action;
+    use crate::BoardPosition;
+    use crate::Square;
+    use crate::Squares;
+    use std::rc::Rc;
 
     struct Test1Player {
-        board: Board,
+        board: IndexBoard,
     }
 
     impl Test1Player {
         fn new() -> Test1Player {
             let indexer = Rc::new(Indexer::new());
             Test1Player {
-                board: Board::new_initial(indexer),
+                board: IndexBoard::new_initial(indexer),
             }
         }
     }
@@ -98,8 +102,7 @@ mod tests {
                 return Action::new_pass(color);
             }
 
-            let (r, c) = positions[0];
-            Action::new_move(color, r, c)
+            Action::new_move(color, positions[0])
         }
     }
 
@@ -119,16 +122,16 @@ mod tests {
                 Square::White
             };
             match depth {
-                0 => Action::new_move(color, 4, 5),
-                1 => Action::new_move(color, 5, 5),
-                2 => Action::new_move(color, 5, 4),
-                3 => Action::new_move(color, 3, 5),
-                4 => Action::new_move(color, 2, 4),
-                5 => Action::new_move(color, 1, 3),
-                6 => Action::new_move(color, 2, 3),
-                7 => Action::new_move(color, 5, 3),
-                8 => Action::new_move(color, 3, 2),
-                9 => Action::new_move(color, 3, 1),
+                0 => Action::new_move(color, BoardPosition(4, 5)),
+                1 => Action::new_move(color, BoardPosition(5, 5)),
+                2 => Action::new_move(color, BoardPosition(5, 4)),
+                3 => Action::new_move(color, BoardPosition(3, 5)),
+                4 => Action::new_move(color, BoardPosition(2, 4)),
+                5 => Action::new_move(color, BoardPosition(1, 3)),
+                6 => Action::new_move(color, BoardPosition(2, 3)),
+                7 => Action::new_move(color, BoardPosition(5, 3)),
+                8 => Action::new_move(color, BoardPosition(3, 2)),
+                9 => Action::new_move(color, BoardPosition(3, 1)),
                 _ => Action::new_pass(color),
             }
         }
@@ -136,14 +139,18 @@ mod tests {
 
     #[test]
     fn test_run() {
+        let indexer = Rc::new(Indexer::new());
+        let board = Rc::new(IndexBoard::new_initial(indexer));
         let black = Test1Player::new();
         let white = Test1Player::new();
-        let mut reversi = Game::new(black, white);
+        let mut reversi = Game::new(board, black, white);
         reversi.run();
 
+        let indexer = Rc::new(Indexer::new());
+        let board = Rc::new(IndexBoard::new_initial(indexer));
         let black = Test2Player::new();
         let white = Test2Player::new();
-        let mut reversi = Game::new(black, white);
+        let mut reversi = Game::new(board, black, white);
         reversi.run();
 
         assert_eq!(11, reversi.depth)

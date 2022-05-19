@@ -1,5 +1,4 @@
-﻿use crate::board::Square;
-use crate::board::BOARD_SIZE;
+﻿use crate::*;
 
 #[derive(Default)]
 pub struct FlipInfo {
