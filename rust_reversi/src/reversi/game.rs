@@ -1,5 +1,7 @@
 use super::board::Board;
 use super::player::Player;
+use crate::indexer::Indexer;
+use std::rc::Rc;
 
 pub struct Game<T, U>
 where
@@ -19,7 +21,8 @@ where
     U: Player,
 {
     pub fn new(black_player: T, white_player: U) -> Game<T, U> {
-        let board = Board::new_initial();
+        let indexer = Rc::new(Indexer::new());
+        let board = Board::new_initial(indexer);
         Game {
             board: board,
             black_player: black_player,
@@ -73,8 +76,9 @@ mod tests {
 
     impl Test1Player {
         fn new() -> Test1Player {
+            let indexer = Rc::new(Indexer::new());
             Test1Player {
-                board: Board::new_initial(),
+                board: Board::new_initial(indexer),
             }
         }
     }

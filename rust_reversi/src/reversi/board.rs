@@ -4,7 +4,7 @@ use super::indexer::Indexer;
 use std::rc::Rc;
 
 pub const BOARD_SIZE: usize = 8;
-pub type Squares = Vec<Vec<Square>>;
+pub type Squares = [[Square; BOARD_SIZE]; BOARD_SIZE];
 
 /// 方向
 pub enum LineDirection {
@@ -31,20 +31,14 @@ pub struct Board {
 
 impl Board {
     /// 新規作成
-    pub fn new_initial() -> Board {
-        let mut squares = Squares::new();
-        for r in 0..BOARD_SIZE {
-            squares.push(Vec::new());
-            for _ in 0..BOARD_SIZE {
-                squares[r].push(Square::Empty);
-            }
-        }
+    pub fn new_initial(indexer: Rc<Indexer>) -> Board {
+        let mut squares: Squares = [[Square::Empty; BOARD_SIZE]; BOARD_SIZE];
         squares[3][4] = Square::Black;
         squares[4][3] = Square::Black;
         squares[3][3] = Square::White;
         squares[4][4] = Square::White;
 
-        Board::new(squares, Rc::new(Indexer::new()))
+        Board::new(squares, indexer)
     }
 
     pub fn new(squares: Squares, indexer: Rc<Indexer>) -> Board {
@@ -212,14 +206,11 @@ impl Board {
         (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo)
     }
 
-    fn get_line(&self, row: usize, col: usize, dir: LineDirection) -> Vec<Square> {
-        let mut line = Vec::new();
-        for _ in 0..BOARD_SIZE {
-            line.push(Square::Empty);
-        }
+    fn get_line(&self, row: usize, col: usize, dir: LineDirection) -> [Square; BOARD_SIZE] {
+        let mut line = [Square::Empty; BOARD_SIZE];
         match dir {
             LineDirection::Left2Right => {
-                line = self.squares[row].clone();
+                line.copy_from_slice(&self.squares[row]);
                 line
             }
             LineDirection::Top2Bottom => {
@@ -286,7 +277,8 @@ mod tests {
 
     #[test]
     fn test_get_line() {
-        let board = Board::new_initial();
+        let indexer = Rc::new(Indexer::new());
+        let board = Board::new_initial(indexer);
 
         let line0 = board.get_line(0, 0, LineDirection::Left2Right);
         assert!(line0.iter().all(|s| *s == Square::Empty));
@@ -320,7 +312,8 @@ mod tests {
 
     #[test]
     fn test_apply_action() {
-        let board = Board::new_initial();
+        let indexer = Rc::new(Indexer::new());
+        let board = Board::new_initial(indexer);
 
         let act = Action::new_move(Square::Black, 0, 0);
         let r = board.apply_action(&act);
