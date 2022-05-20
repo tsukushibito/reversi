@@ -3,25 +3,27 @@ use crate::ActionType;
 use crate::Board;
 use std::rc::Rc;
 
-pub struct Game<T, U>
+pub struct Game<T, U, V>
 where
     T: Player,
     U: Player,
+    V: Board<V>,
 {
-    board: Rc<dyn Board>,
+    board: Rc<V>,
     black_player: T,
     white_player: U,
     depth: u32,
     has_passed: bool,
-    board_history: Vec<Rc<dyn Board>>,
+    board_history: Vec<Rc<V>>,
 }
 
-impl<T, U> Game<T, U>
+impl<T, U, V> Game<T, U, V>
 where
     T: Player,
     U: Player,
+    V: Board<V>,
 {
-    pub fn new(initial_board: Rc<dyn Board>, black_player: T, white_player: U) -> Game<T, U> {
+    pub fn new(initial_board: Rc<V>, black_player: T, white_player: U) -> Game<T, U, V> {
         Game {
             board: initial_board,
             black_player: black_player,

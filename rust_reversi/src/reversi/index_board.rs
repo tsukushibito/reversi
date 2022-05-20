@@ -112,8 +112,8 @@ impl IndexBoard {
     }
 }
 
-impl Board for IndexBoard {
-    fn apply_action(&self, action: &Action) -> Option<Rc<dyn Board>> {
+impl Board<IndexBoard> for IndexBoard {
+    fn apply_action(&self, action: &Action) -> Option<Rc<IndexBoard>> {
         match action.action {
             ActionType::Pass => {
                 // パスできるかチェック
@@ -195,7 +195,6 @@ impl Board for IndexBoard {
 
                 Some(Rc::new(IndexBoard::new(squares, self.indexer.clone())))
             }
-            _ => None,
         }
     }
 
@@ -239,6 +238,7 @@ impl Board for IndexBoard {
     fn white_count(&self) -> u32 {
         self.square_count(Square::White)
     }
+
     fn squares(&self) -> &Squares {
         &self.squares
     }
@@ -299,21 +299,21 @@ mod tests {
         let r = board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
-        assert!(next_board.squares()[2][3] == Square::Black);
-        assert!(next_board.squares()[3][3] == Square::Black);
-        assert!(next_board.squares()[4][3] == Square::Black);
-        assert!(next_board.squares()[3][4] == Square::Black);
-        assert!(next_board.squares()[4][4] == Square::White);
+        assert!(next_board.squares[2][3] == Square::Black);
+        assert!(next_board.squares[3][3] == Square::Black);
+        assert!(next_board.squares[4][3] == Square::Black);
+        assert!(next_board.squares[3][4] == Square::Black);
+        assert!(next_board.squares[4][4] == Square::White);
 
         let act = Action::new(Square::White, ActionType::Move(Position(2, 2)));
         let r = next_board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
-        assert!(next_board.squares()[2][3] == Square::Black);
-        assert!(next_board.squares()[4][3] == Square::Black);
-        assert!(next_board.squares()[3][4] == Square::Black);
-        assert!(next_board.squares()[2][2] == Square::White);
-        assert!(next_board.squares()[3][3] == Square::White);
-        assert!(next_board.squares()[4][4] == Square::White);
+        assert!(next_board.squares[2][3] == Square::Black);
+        assert!(next_board.squares[4][3] == Square::Black);
+        assert!(next_board.squares[3][4] == Square::Black);
+        assert!(next_board.squares[2][2] == Square::White);
+        assert!(next_board.squares[3][3] == Square::White);
+        assert!(next_board.squares[4][4] == Square::White);
     }
 }

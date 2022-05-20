@@ -46,8 +46,8 @@ pub enum Square {
     White = 0,
 }
 
-pub trait Board {
-    fn apply_action(&self, action: &Action) -> Option<Rc<dyn Board>>;
+pub trait Board<T> {
+    fn apply_action(&self, action: &Action) -> Option<Rc<T>>;
     fn get_movable_positions(&self, color: Square) -> Vec<Position>;
     fn is_game_over(&self) -> bool;
     fn square_count(&self, color: Square) -> u32;
