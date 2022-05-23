@@ -1,5 +1,5 @@
-﻿use super::indexer::FlipInfo;
-use super::indexer::Indexer;
+﻿use crate::indexer::FlipInfo;
+use crate::indexer::Indexer;
 use crate::*;
 use std::rc::Rc;
 
