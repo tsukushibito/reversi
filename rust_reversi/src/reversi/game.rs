@@ -1,5 +1,4 @@
 use crate::player::Player;
-use crate::ActionType;
 use crate::Board;
 use std::rc::Rc;
 
@@ -62,8 +61,9 @@ mod tests {
     use crate::index_board::IndexBoard;
     use crate::indexer::Indexer;
     use crate::Action;
+    use crate::ActionType;
+    use crate::PlayerColor;
     use crate::Position;
-    use crate::Square;
     use crate::Squares;
     use std::rc::Rc;
 
@@ -84,9 +84,9 @@ mod tests {
     impl Player for Test1Player {
         fn take_action(&mut self, depth: u32, squares: &Squares) -> Action {
             let color = if depth % 2 == 0 {
-                Square::Black
+                PlayerColor::Black
             } else {
-                Square::White
+                PlayerColor::White
             };
 
             self.board.squares = squares.clone();
@@ -112,9 +112,9 @@ mod tests {
     impl Player for Test2Player {
         fn take_action(&mut self, depth: u32, _: &Squares) -> Action {
             let color = if depth % 2 == 0 {
-                Square::Black
+                PlayerColor::Black
             } else {
-                Square::White
+                PlayerColor::White
             };
             match depth {
                 0 => Action::new(color, ActionType::Move(Position(4, 5))),

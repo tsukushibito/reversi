@@ -27,17 +27,16 @@ pub struct Indexer {
 impl Indexer {
     pub fn new() -> Indexer {
         Indexer {
-            black_mobility_table: create_mobility_table(Square::Black),
-            white_mobility_table: create_mobility_table(Square::White),
+            black_mobility_table: create_mobility_table(PlayerColor::Black),
+            white_mobility_table: create_mobility_table(PlayerColor::White),
         }
     }
 
-    pub fn get_flip_info(&self, color: Square, line: &[Square], pos: usize) -> &FlipInfo {
+    pub fn get_flip_info(&self, color: PlayerColor, line: &[Square], pos: usize) -> &FlipInfo {
         let index = line_to_index(line);
         let table = match color {
-            Square::Black => &self.black_mobility_table,
-            Square::White => &self.white_mobility_table,
-            _ => panic!(),
+            PlayerColor::Black => &self.black_mobility_table,
+            PlayerColor::White => &self.white_mobility_table,
         };
 
         &table[index].flip_infos[pos]
@@ -53,9 +52,9 @@ fn index_to_line(index: usize) -> Vec<Square> {
     let mut i = index;
     for n in 0..BOARD_SIZE {
         line[n] = match i % 3 {
-            0 => Square::White,
-            1 => Square::Empty,
-            2 => Square::Black,
+            0 => Square::Empty,
+            1 => Square::Black,
+            2 => Square::White,
             _ => Square::Empty,
         };
         i = i / 3;
@@ -71,10 +70,11 @@ fn line_to_index(line: &[Square]) -> usize {
     }) as usize
 }
 
-fn create_mobility_table(color: Square) -> Vec<MobilityInfo> {
-    if matches!(color, Square::Empty) {
-        panic!();
-    }
+fn create_mobility_table(color: PlayerColor) -> Vec<MobilityInfo> {
+    let color = match color {
+        PlayerColor::Black => Square::Black,
+        PlayerColor::White => Square::White,
+    };
 
     let opponent = match color {
         Square::White => Square::Black,
@@ -178,7 +178,7 @@ mod tests {
 
     #[test]
     fn test_create_mobility_table() {
-        let table = create_mobility_table(Square::Black);
+        let table = create_mobility_table(PlayerColor::Black);
 
         for (i, info) in table.iter().enumerate() {
             let line = index_to_line(i);
@@ -201,7 +201,7 @@ mod tests {
             }
         }
 
-        let table = create_mobility_table(Square::White);
+        let table = create_mobility_table(PlayerColor::White);
 
         for (i, info) in table.iter().enumerate() {
             let line = index_to_line(i);

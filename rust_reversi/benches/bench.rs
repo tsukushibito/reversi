@@ -5,22 +5,22 @@ use reversi::indexer::Indexer;
 use reversi::Action;
 use reversi::ActionType;
 use reversi::Board;
+use reversi::PlayerColor;
 use reversi::Position;
-use reversi::Square;
 use std::rc::Rc;
 
 fn action_table() -> [Action; 10] {
     [
-        Action::new(Square::Black, ActionType::Move(Position(4, 5))),
-        Action::new(Square::White, ActionType::Move(Position(5, 5))),
-        Action::new(Square::Black, ActionType::Move(Position(5, 4))),
-        Action::new(Square::White, ActionType::Move(Position(3, 5))),
-        Action::new(Square::Black, ActionType::Move(Position(2, 4))),
-        Action::new(Square::White, ActionType::Move(Position(1, 3))),
-        Action::new(Square::Black, ActionType::Move(Position(2, 3))),
-        Action::new(Square::White, ActionType::Move(Position(5, 3))),
-        Action::new(Square::Black, ActionType::Move(Position(3, 2))),
-        Action::new(Square::White, ActionType::Move(Position(3, 1))),
+        Action::new(PlayerColor::Black, ActionType::Move(Position(4, 5))),
+        Action::new(PlayerColor::White, ActionType::Move(Position(5, 5))),
+        Action::new(PlayerColor::Black, ActionType::Move(Position(5, 4))),
+        Action::new(PlayerColor::White, ActionType::Move(Position(3, 5))),
+        Action::new(PlayerColor::Black, ActionType::Move(Position(2, 4))),
+        Action::new(PlayerColor::White, ActionType::Move(Position(1, 3))),
+        Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3))),
+        Action::new(PlayerColor::White, ActionType::Move(Position(5, 3))),
+        Action::new(PlayerColor::Black, ActionType::Move(Position(3, 2))),
+        Action::new(PlayerColor::White, ActionType::Move(Position(3, 1))),
     ]
 }
 

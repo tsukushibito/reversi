@@ -1,7 +1,7 @@
 use crate::*;
 
 pub trait Player {
-    fn take_action(&mut self, depth: u32, squares: &Squares) -> Action;
+    fn take_action(&mut self, depth: u32, board: &Squares) -> Action;
 }
 
 pub struct ConsoleIoPlayer {}
@@ -31,9 +31,9 @@ impl Player for ConsoleIoPlayer {
         println!("Please input move position.");
 
         let color = if depth % 2 == 0 {
-            Square::Black
+            PlayerColor::Black
         } else {
-            Square::White
+            PlayerColor::White
         };
 
         loop {

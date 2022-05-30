@@ -31,7 +31,7 @@ impl IndexBoard {
 
     fn get_flip_infos(
         &self,
-        color: Square,
+        color: PlayerColor,
         pos: Position,
     ) -> (&FlipInfo, &FlipInfo, &FlipInfo, &FlipInfo) {
         // 左右方向の情報
@@ -107,7 +107,7 @@ impl IndexBoard {
         }
     }
 
-    fn can_pass(&self, color: Square) -> bool {
+    fn can_pass(&self, color: PlayerColor) -> bool {
         self.get_movable_positions(color).len() == 0
     }
 }
@@ -146,51 +146,56 @@ impl Board<IndexBoard> for IndexBoard {
 
                 let mut squares = self.squares.clone();
 
+                let square_color = match action.color {
+                    PlayerColor::Black => Square::Black,
+                    PlayerColor::White => Square::White,
+                };
+
                 // アクションの箇所に石を置く
-                squares[position.0][position.1] = action.color;
+                squares[position.0][position.1] = square_color;
 
                 // 左右方向
                 for p in 1..=l2r_finfo.higher {
                     let c = position.1 + p as usize;
-                    squares[position.0][c] = action.color;
+                    squares[position.0][c] = square_color;
                 }
                 for p in 1..=l2r_finfo.lower {
                     let c = position.1 - p as usize;
-                    squares[position.0][c] = action.color;
+                    squares[position.0][c] = square_color;
                 }
 
                 // 上下方向
                 for p in 1..=t2b_finfo.higher {
                     let r = position.0 + p as usize;
-                    squares[r][position.1] = action.color;
+                    squares[r][position.1] = square_color;
                 }
                 for p in 1..=t2b_finfo.lower {
                     let r = position.0 - p as usize;
-                    squares[r][position.1] = action.color;
+                    squares[r][position.1] = square_color;
                 }
 
                 // 左上右下方向
                 for p in 1..=tl2br_finfo.higher {
                     let r = position.0 + p as usize;
                     let c = position.1 + p as usize;
-                    squares[r][c] = action.color;
+                    squares[r][c] = square_color;
                 }
                 for p in 1..=tl2br_finfo.lower {
                     let r = position.0 - p as usize;
                     let c = position.1 - p as usize;
-                    squares[r][c] = action.color;
+                    squares[r][c] = square_color;
                 }
 
                 // 左下右上方向
                 for p in 1..=bl2tr_finfo.higher {
                     let r = position.0 - p as usize;
                     let c = position.1 + p as usize;
-                    squares[r][c] = action.color;
+                    squares[r][c] = square_color;
                 }
                 for p in 1..=bl2tr_finfo.lower {
                     let r = position.0 + p as usize;
                     let c = position.1 - p as usize;
-                    squares[r][c] = action.color;
+                    squares[r][c] = square_color;
                 }
 
                 Some(Rc::new(IndexBoard::new(squares, self.indexer.clone())))
@@ -198,7 +203,7 @@ impl Board<IndexBoard> for IndexBoard {
         }
     }
 
-    fn get_movable_positions(&self, color: Square) -> Vec<Position> {
+    fn get_movable_positions(&self, color: PlayerColor) -> Vec<Position> {
         let mut positions: Vec<Position> = Vec::new();
         for r in 0..BOARD_SIZE {
             for c in 0..BOARD_SIZE {
@@ -214,8 +219,8 @@ impl Board<IndexBoard> for IndexBoard {
     }
 
     fn is_game_over(&self) -> bool {
-        self.get_movable_positions(Square::Black).len()
-            + self.get_movable_positions(Square::White).len()
+        self.get_movable_positions(PlayerColor::Black).len()
+            + self.get_movable_positions(PlayerColor::White).len()
             == 0
     }
 
@@ -291,11 +296,11 @@ mod tests {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer);
 
-        let act = Action::new(Square::Black, ActionType::Move(Position(0, 0)));
+        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(0, 0)));
         let r = board.apply_action(&act);
         assert!(r.is_none());
 
-        let act = Action::new(Square::Black, ActionType::Move(Position(2, 3)));
+        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
         let r = board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
@@ -305,7 +310,7 @@ mod tests {
         assert!(next_board.squares[3][4] == Square::Black);
         assert!(next_board.squares[4][4] == Square::White);
 
-        let act = Action::new(Square::White, ActionType::Move(Position(2, 2)));
+        let act = Action::new(PlayerColor::White, ActionType::Move(Position(2, 2)));
         let r = next_board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
