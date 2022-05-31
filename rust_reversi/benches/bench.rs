@@ -30,7 +30,7 @@ fn index_board(c: &mut Criterion) {
             let actions = action_table();
             let indexer = Rc::new(Indexer::new());
             for _ in 0..1000 {
-                let mut board = Rc::new(IndexBoard::new_initial(indexer.clone()));
+                let mut board = IndexBoard::new_initial(indexer.clone());
                 for action in &actions {
                     board = board.apply_action(&action).unwrap();
                 }
@@ -44,7 +44,7 @@ fn array_board(c: &mut Criterion) {
         b.iter(|| {
             let actions = action_table();
             for _ in 0..1000 {
-                let mut board = Rc::new(ArrayBoard::new_initial());
+                let mut board = ArrayBoard::new_initial();
                 for action in &actions {
                     board = board.apply_action(&action).unwrap();
                 }

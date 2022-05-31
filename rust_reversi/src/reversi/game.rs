@@ -48,7 +48,7 @@ where
 
                 self.depth += 1;
                 self.board_history.push(self.board.clone());
-                self.board = next_board;
+                self.board = Rc::new(next_board);
             }
         }
     }

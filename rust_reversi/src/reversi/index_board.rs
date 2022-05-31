@@ -113,12 +113,12 @@ impl IndexBoard {
 }
 
 impl Board<IndexBoard> for IndexBoard {
-    fn apply_action(&self, action: &Action) -> Option<Rc<IndexBoard>> {
+    fn apply_action(&self, action: &Action) -> Option<IndexBoard> {
         match action.action {
             ActionType::Pass => {
                 // パスできるかチェック
                 if self.can_pass(&action.color) {
-                    Some(Rc::new(self.clone()))
+                    Some(self.clone())
                 } else {
                     None
                 }
@@ -198,7 +198,7 @@ impl Board<IndexBoard> for IndexBoard {
                     squares[r][c] = square_color;
                 }
 
-                Some(Rc::new(IndexBoard::new(squares, self.indexer.clone())))
+                Some(IndexBoard::new(squares, self.indexer.clone()))
             }
         }
     }
@@ -246,6 +246,9 @@ impl Board<IndexBoard> for IndexBoard {
 
     fn squares(&self) -> &Squares {
         &self.squares
+    }
+    fn duplicate(&self) -> IndexBoard {
+        self.clone()
     }
 }
 

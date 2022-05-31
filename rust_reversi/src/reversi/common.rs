@@ -54,11 +54,12 @@ impl Action {
 }
 
 pub trait Board<T> {
-    fn apply_action(&self, action: &Action) -> Option<Rc<T>>;
+    fn apply_action(&self, action: &Action) -> Option<T>;
     fn get_movable_positions(&self, color: &PlayerColor) -> Vec<Position>;
     fn is_game_over(&self) -> bool;
     fn square_count(&self, color: Square) -> u32;
     fn black_count(&self) -> u32;
     fn white_count(&self) -> u32;
     fn squares(&self) -> &Squares;
+    fn duplicate(&self) -> T;
 }

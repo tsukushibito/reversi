@@ -65,13 +65,13 @@ impl ArrayBoard {
 }
 
 impl Board<ArrayBoard> for ArrayBoard {
-    fn apply_action(&self, action: &Action) -> Option<Rc<ArrayBoard>> {
+    fn apply_action(&self, action: &Action) -> Option<ArrayBoard> {
         match action.action {
             ActionType::Pass => {
                 // パスできるかチェック
                 let movables = self.get_movable_positions(&action.color);
                 if movables.len() == 0 {
-                    Some(Rc::new(self.clone()))
+                    Some(self.clone())
                 } else {
                     None
                 }
@@ -106,7 +106,7 @@ impl Board<ArrayBoard> for ArrayBoard {
                         }
                     }
 
-                    Some(Rc::new(ArrayBoard::new(squares)))
+                    Some(ArrayBoard::new(squares))
                 } else {
                     return None;
                 }
@@ -161,6 +161,9 @@ impl Board<ArrayBoard> for ArrayBoard {
 
     fn squares(&self) -> &Squares {
         &self.squares
+    }
+    fn duplicate(&self) -> ArrayBoard {
+        self.clone()
     }
 }
 
