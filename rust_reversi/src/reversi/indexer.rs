@@ -130,11 +130,11 @@ mod tests {
 
     #[test]
     fn test_line_to_index() {
-        let line0 = [Square::White; BOARD_SIZE];
+        let line0 = [Square::Empty; BOARD_SIZE];
         let index0 = line_to_index(&line0);
         assert_eq!(0, index0);
 
-        let line1 = [Square::Empty; BOARD_SIZE];
+        let line1 = [Square::Black; BOARD_SIZE];
         let index1 = line_to_index(&line1);
         let mut expect1 = 0;
         for n in 0..BOARD_SIZE {
@@ -142,7 +142,7 @@ mod tests {
         }
         assert_eq!(expect1, index1 as u32);
 
-        let line2 = [Square::Black; BOARD_SIZE];
+        let line2 = [Square::White; BOARD_SIZE];
         let index2 = line_to_index(&line2);
         let mut expect2 = 0;
         for n in 0..BOARD_SIZE {
@@ -155,7 +155,7 @@ mod tests {
     fn test_index_to_line() {
         let line = index_to_line(0);
         for s in line {
-            assert!(matches!(s, Square::White));
+            assert!(matches!(s, Square::Empty));
         }
 
         let line1 = [

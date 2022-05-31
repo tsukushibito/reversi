@@ -90,7 +90,7 @@ mod tests {
             };
 
             self.board.squares = squares.clone();
-            let positions = self.board.get_movable_positions(color);
+            let positions = self.board.get_movable_positions(&color);
 
             if positions.len() == 0 {
                 return Action::new(color, ActionType::Pass);

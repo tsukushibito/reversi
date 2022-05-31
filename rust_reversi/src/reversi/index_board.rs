@@ -31,32 +31,32 @@ impl IndexBoard {
 
     fn get_flip_infos(
         &self,
-        color: PlayerColor,
-        pos: Position,
+        color: &PlayerColor,
+        pos: &Position,
     ) -> (&FlipInfo, &FlipInfo, &FlipInfo, &FlipInfo) {
         // 左右方向の情報
-        let l2r = self.get_line(pos, LineDirection::Left2Right);
-        let l2r_finfo = self.indexer.get_flip_info(color, &l2r, pos.1);
+        let l2r = self.get_line(*pos, LineDirection::Left2Right);
+        let l2r_finfo = self.indexer.get_flip_info(*color, &l2r, pos.1);
 
         // 上下方向の情報
-        let t2b = self.get_line(pos, LineDirection::Top2Bottom);
-        let t2b_finfo = self.indexer.get_flip_info(color, &t2b, pos.0);
+        let t2b = self.get_line(*pos, LineDirection::Top2Bottom);
+        let t2b_finfo = self.indexer.get_flip_info(*color, &t2b, pos.0);
 
         let r = pos.0 as i32;
         let c = pos.1 as i32;
         // 左上から右下方向の情報
-        let tl2br = self.get_line(pos, LineDirection::TopLeft2BottomRight);
+        let tl2br = self.get_line(*pos, LineDirection::TopLeft2BottomRight);
         let p = if r - c >= 0 { pos.1 } else { pos.0 };
-        let tl2br_finfo = self.indexer.get_flip_info(color, &tl2br, p);
+        let tl2br_finfo = self.indexer.get_flip_info(*color, &tl2br, p);
 
         // 左下から右上方向の情報
-        let bl2tr = self.get_line(pos, LineDirection::BottomLeft2TopRight);
+        let bl2tr = self.get_line(*pos, LineDirection::BottomLeft2TopRight);
         let pos = if r + c - BOARD_SIZE as i32 + 1 < 0 {
             pos.1
         } else {
             BOARD_SIZE - 1 - pos.0
         };
-        let bl2tr_finfo = self.indexer.get_flip_info(color, &bl2tr, pos);
+        let bl2tr_finfo = self.indexer.get_flip_info(*color, &bl2tr, pos);
 
         (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo)
     }
@@ -107,7 +107,7 @@ impl IndexBoard {
         }
     }
 
-    fn can_pass(&self, color: PlayerColor) -> bool {
+    fn can_pass(&self, color: &PlayerColor) -> bool {
         self.get_movable_positions(color).len() == 0
     }
 }
@@ -117,7 +117,7 @@ impl Board<IndexBoard> for IndexBoard {
         match action.action {
             ActionType::Pass => {
                 // パスできるかチェック
-                if self.can_pass(action.color) {
+                if self.can_pass(&action.color) {
                     Some(Rc::new(self.clone()))
                 } else {
                     None
@@ -131,7 +131,7 @@ impl Board<IndexBoard> for IndexBoard {
 
                 // 各方向の情報取得
                 let (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo) =
-                    self.get_flip_infos(action.color, position);
+                    self.get_flip_infos(&action.color, &position);
 
                 // ひっくり返す石の数
                 let flip_count = l2r_finfo.flip_count()
@@ -203,11 +203,11 @@ impl Board<IndexBoard> for IndexBoard {
         }
     }
 
-    fn get_movable_positions(&self, color: PlayerColor) -> Vec<Position> {
+    fn get_movable_positions(&self, color: &PlayerColor) -> Vec<Position> {
         let mut positions: Vec<Position> = Vec::new();
         for r in 0..BOARD_SIZE {
             for c in 0..BOARD_SIZE {
-                let (l2r, t2b, tl2br, bl2tr) = self.get_flip_infos(color, Position(r, c));
+                let (l2r, t2b, tl2br, bl2tr) = self.get_flip_infos(&color, &Position(r, c));
                 let count =
                     l2r.flip_count() + t2b.flip_count() + tl2br.flip_count() + bl2tr.flip_count();
                 if count > 0 {
@@ -219,8 +219,8 @@ impl Board<IndexBoard> for IndexBoard {
     }
 
     fn is_game_over(&self) -> bool {
-        self.get_movable_positions(PlayerColor::Black).len()
-            + self.get_movable_positions(PlayerColor::White).len()
+        self.get_movable_positions(&PlayerColor::Black).len()
+            + self.get_movable_positions(&PlayerColor::White).len()
             == 0
     }
 

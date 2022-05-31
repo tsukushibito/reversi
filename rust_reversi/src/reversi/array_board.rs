@@ -34,7 +34,7 @@ impl ArrayBoard {
         ArrayBoard { squares: squares }
     }
 
-    fn get_flip_count(&self, color: PlayerColor, pos: (usize, usize), dir: (i32, i32)) -> i32 {
+    fn get_flip_count(&self, color: &PlayerColor, pos: &(usize, usize), dir: &(i32, i32)) -> i32 {
         let color = match color {
             PlayerColor::Black => Square::Black,
             PlayerColor::White => Square::White,
@@ -69,7 +69,7 @@ impl Board<ArrayBoard> for ArrayBoard {
         match action.action {
             ActionType::Pass => {
                 // パスできるかチェック
-                let movables = self.get_movable_positions(action.color);
+                let movables = self.get_movable_positions(&action.color);
                 if movables.len() == 0 {
                     Some(Rc::new(self.clone()))
                 } else {
@@ -81,7 +81,7 @@ impl Board<ArrayBoard> for ArrayBoard {
                     // 空きマス以外には石を置けない
                     return None;
                 }
-                let movables = self.get_movable_positions(action.color);
+                let movables = self.get_movable_positions(&action.color);
                 if let Option::Some(_) = movables
                     .iter()
                     .find(|p| p.0 == position.0 && p.1 == position.1)
@@ -96,7 +96,8 @@ impl Board<ArrayBoard> for ArrayBoard {
                     // アクションの箇所に石を置く
                     squares[position.0][position.1] = square_color;
                     for dir in DIRECTIONS {
-                        let flip = self.get_flip_count(action.color, (position.0, position.1), dir);
+                        let flip =
+                            self.get_flip_count(&action.color, &(position.0, position.1), &dir);
                         let mut pos = (position.0 as i32, position.1 as i32);
                         for _ in 0..flip {
                             pos.0 += dir.0;
@@ -113,7 +114,7 @@ impl Board<ArrayBoard> for ArrayBoard {
         }
     }
 
-    fn get_movable_positions(&self, color: PlayerColor) -> Vec<Position> {
+    fn get_movable_positions(&self, color: &PlayerColor) -> Vec<Position> {
         let mut positions = Vec::new();
         for row in 0..BOARD_SIZE {
             for col in 0..BOARD_SIZE {
@@ -121,7 +122,7 @@ impl Board<ArrayBoard> for ArrayBoard {
                     continue;
                 }
                 for dir in DIRECTIONS {
-                    let flip = self.get_flip_count(color, (row, col), dir);
+                    let flip = self.get_flip_count(color, &(row, col), &dir);
                     if flip > 0 {
                         positions.push(Position(row, col));
                         break;
@@ -133,8 +134,8 @@ impl Board<ArrayBoard> for ArrayBoard {
     }
 
     fn is_game_over(&self) -> bool {
-        self.get_movable_positions(PlayerColor::Black).len()
-            + self.get_movable_positions(PlayerColor::White).len()
+        self.get_movable_positions(&PlayerColor::Black).len()
+            + self.get_movable_positions(&PlayerColor::White).len()
             == 0
     }
 
