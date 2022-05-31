@@ -79,4 +79,83 @@ where
         }
         self.value
     }
+    pub fn get_action(&self) -> Option<Action> {
+        if self.children.len() == 0 {
+            return None;
+        }
+
+        let (max_index, _) = self
+            .children
+            .iter()
+            .map(|child| child.value)
+            .enumerate()
+            .fold((usize::MIN, i32::MIN), |(i_a, a), (i_b, b)| {
+                if b > a {
+                    (i_b, b)
+                } else {
+                    (i_a, a)
+                }
+            });
+
+        let positions = self.board.get_movable_positions(&self.player_color);
+
+        Some(Action::new(
+            self.player_color,
+            ActionType::Move(positions[max_index]),
+        ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::game_tree::GameTreeNode;
+    use crate::index_board::IndexBoard;
+    use crate::indexer::Indexer;
+    use crate::PlayerColor;
+    use crate::Square;
+    use std::rc::Rc;
+
+    #[test]
+    fn test_game_tree_evaluate() {
+        let indexer = Rc::new(Indexer::new());
+        let board = IndexBoard::new_initial(indexer);
+        let mut node = GameTreeNode::new(board, PlayerColor::Black);
+        let evaluator = |board: &IndexBoard, color: &PlayerColor| {
+            let weight_table: [i32; 64] = [
+                30, -12, 0, -1, -1, 0, -12, 30, //
+                -12, -15, -3, -3, -3, -3, -15, -12, //
+                0, -3, 0, -1, -1, 0, -3, 0, //
+                -1, -3, -1, -1, -1, -1, -3, -1, //
+                -1, -3, -1, -1, -1, -1, -3, -1, //
+                0, -3, 0, -1, -1, 0, -3, 0, //
+                -12, -15, -3, -3, -3, -3, -15, -12, //
+                30, -12, 0, -1, -1, 0, -12, 30, //
+            ];
+            let value = board
+                .squares
+                .iter()
+                .flatten()
+                .zip(weight_table.iter())
+                .fold(0, |v, (s, w)| -> i32 {
+                    let color = match color {
+                        PlayerColor::Black => Square::Black,
+                        PlayerColor::White => Square::White,
+                    };
+                    if *s == Square::Empty {
+                        v
+                    } else if *s == color {
+                        v + *w
+                    } else {
+                        v - *w
+                    }
+                });
+            value
+        };
+
+        let v = node.evaluate(&evaluator, 1);
+        assert_eq!(v, -3);
+
+        let act = node.get_action();
+        assert_ne!(act, None);
+    }
 }

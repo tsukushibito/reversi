@@ -21,7 +21,7 @@ pub enum Square {
 }
 
 // プレイヤー先手or後手
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum PlayerColor {
     Black,
     White,
@@ -29,16 +29,16 @@ pub enum PlayerColor {
 
 /// 位置
 /// (行, 列)のタプル
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct Position(pub usize, pub usize);
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub enum ActionType {
     Move(Position),
     Pass,
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub struct Action {
     pub color: PlayerColor,
     pub action: ActionType,
