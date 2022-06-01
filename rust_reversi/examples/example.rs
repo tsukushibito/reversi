@@ -1,4 +1,5 @@
-﻿use reversi::game::Game;
+﻿use reversi::ai_player::AiPlayer;
+use reversi::game::Game;
 use reversi::index_board::IndexBoard;
 use reversi::indexer::Indexer;
 use reversi::player::ConsoleIoPlayer;
@@ -8,7 +9,7 @@ fn main() {
     let indexer = Rc::new(Indexer::new());
     let board = Rc::new(IndexBoard::new_initial(indexer));
     let black_player = ConsoleIoPlayer::new();
-    let white_player = ConsoleIoPlayer::new();
+    let white_player = AiPlayer::new();
     let mut reversi = Game::new(board, black_player, white_player);
     reversi.run();
 }

@@ -3,13 +3,14 @@ use crate::ActionType;
 use crate::Board;
 use crate::PlayerColor;
 
-struct GameTreeNode<T>
+pub struct GameTreeNode<T>
 where
     T: Board<T>,
 {
     board: T,
     player_color: PlayerColor,
     value: i32,
+    action: Option<Action>,
     children: Vec<GameTreeNode<T>>,
 }
 
@@ -17,11 +18,12 @@ impl<T> GameTreeNode<T>
 where
     T: Board<T>,
 {
-    pub fn new(board: T, color: PlayerColor) -> GameTreeNode<T> {
+    pub fn new(board: T, color: PlayerColor, action: Option<Action>) -> GameTreeNode<T> {
         GameTreeNode {
             board: board,
             player_color: color,
             value: 0,
+            action: action,
             children: Default::default(),
         }
     }
@@ -29,7 +31,8 @@ where
     /// NegaMax法で評価
     /// evaluator: 評価関数
     /// depth: 読みの深さ
-    pub fn evaluate<F>(&mut self, evaluator: &F, depth: usize) -> i32
+    /// return: (評価値, 次の手)
+    pub fn evaluate<F>(&mut self, evaluator: &F, depth: usize) -> (i32, Option<Action>)
     where
         F: Fn(&T, &PlayerColor) -> i32,
     {
@@ -44,25 +47,36 @@ where
                 PlayerColor::Black
             };
 
-            let movables = self.board.get_movable_positions(&self.player_color);
-            if movables.len() > 0 {
+            let positions = self.board.get_movable_positions(&self.player_color);
+            if positions.len() > 0 {
+                let actions = positions
+                    .iter()
+                    .map(|p| Action::new(self.player_color, ActionType::Move(*p)))
+                    .collect::<Vec<_>>();
+
                 // 展開
-                for movable in movables {
-                    let next = self
-                        .board
-                        .apply_action(&Action::new(self.player_color, ActionType::Move(movable)));
+                for act in &actions {
+                    let next = self.board.apply_action(&act);
                     self.children
-                        .push(GameTreeNode::new(next.unwrap(), opponent));
+                        .push(GameTreeNode::new(next.unwrap(), opponent, None));
                 }
 
-                let value = self
+                // 子ノードを評価(NegaMaxなので符号反転)
+                let values = self
                     .children
                     .iter_mut()
-                    .map(|child| -child.evaluate(evaluator, depth - 1))
-                    .max();
+                    .map(|child| -child.evaluate(evaluator, depth - 1).0)
+                    .collect::<Vec<_>>();
 
-                self.value = value.unwrap();
+                // 子ノードの最大評価を自分の評価値とする
+                self.value = *values.iter().max().unwrap();
+
+                // 手の保存
+                let mut value_actions = values.iter().zip(actions);
+                self.action = Some(value_actions.find(|va| *va.0 == self.value).unwrap().1);
             } else {
+                // パス時
+                // ゲーム終了判定
                 let opponent_movables = self.board.get_movable_positions(&opponent);
                 if opponent_movables.len() == 0 {
                     // ゲーム終了なので評価処理実行
@@ -70,48 +84,30 @@ where
                 } else {
                     // ボードをコピーして展開
                     self.children
-                        .push(GameTreeNode::new(self.board.duplicate(), opponent));
+                        .push(GameTreeNode::new(self.board.duplicate(), opponent, None));
 
                     // 評価
-                    self.value = -self.children[0].evaluate(evaluator, depth - 1);
+                    self.value = -(self.children[0].evaluate(evaluator, depth - 1).0);
+
+                    // 手はパス
+                    self.action = Some(Action::new(self.player_color, ActionType::Pass));
                 }
             }
         }
-        self.value
-    }
-    pub fn get_action(&self) -> Option<Action> {
-        if self.children.len() == 0 {
-            return None;
-        }
-
-        let (max_index, _) = self
-            .children
-            .iter()
-            .map(|child| child.value)
-            .enumerate()
-            .fold((usize::MIN, i32::MIN), |(i_a, a), (i_b, b)| {
-                if b > a {
-                    (i_b, b)
-                } else {
-                    (i_a, a)
-                }
-            });
-
-        let positions = self.board.get_movable_positions(&self.player_color);
-
-        Some(Action::new(
-            self.player_color,
-            ActionType::Move(positions[max_index]),
-        ))
+        (self.value, self.action)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::evaluator::simple_evaluator;
     use crate::game_tree::GameTreeNode;
     use crate::index_board::IndexBoard;
     use crate::indexer::Indexer;
+    use crate::Action;
+    use crate::ActionType;
     use crate::PlayerColor;
+    use crate::Position;
     use crate::Square;
     use std::rc::Rc;
 
@@ -119,43 +115,12 @@ mod tests {
     fn test_game_tree_evaluate() {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer);
-        let mut node = GameTreeNode::new(board, PlayerColor::Black);
-        let evaluator = |board: &IndexBoard, color: &PlayerColor| {
-            let weight_table: [i32; 64] = [
-                30, -12, 0, -1, -1, 0, -12, 30, //
-                -12, -15, -3, -3, -3, -3, -15, -12, //
-                0, -3, 0, -1, -1, 0, -3, 0, //
-                -1, -3, -1, -1, -1, -1, -3, -1, //
-                -1, -3, -1, -1, -1, -1, -3, -1, //
-                0, -3, 0, -1, -1, 0, -3, 0, //
-                -12, -15, -3, -3, -3, -3, -15, -12, //
-                30, -12, 0, -1, -1, 0, -12, 30, //
-            ];
-            let value = board
-                .squares
-                .iter()
-                .flatten()
-                .zip(weight_table.iter())
-                .fold(0, |v, (s, w)| -> i32 {
-                    let color = match color {
-                        PlayerColor::Black => Square::Black,
-                        PlayerColor::White => Square::White,
-                    };
-                    if *s == Square::Empty {
-                        v
-                    } else if *s == color {
-                        v + *w
-                    } else {
-                        v - *w
-                    }
-                });
-            value
-        };
+        let mut node = GameTreeNode::new(board, PlayerColor::Black, None);
 
-        let v = node.evaluate(&evaluator, 1);
-        assert_eq!(v, -3);
+        let value_action = node.evaluate(&simple_evaluator, 1);
+        assert_eq!(value_action.0, -3);
 
-        let act = node.get_action();
-        assert_ne!(act, None);
+        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
+        assert_eq!(value_action.1.unwrap(), act);
     }
 }
