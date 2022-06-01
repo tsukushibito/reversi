@@ -42,7 +42,7 @@ where
             };
 
             if let Some(next_board) = self.board.apply_action(&action) {
-                if self.board.is_game_over() {
+                if next_board.is_game_over() {
                     break;
                 }
 
