@@ -4,6 +4,7 @@ use crate::index_board::IndexBoard;
 use crate::indexer::Indexer;
 use crate::player::Player;
 use crate::Action;
+use crate::ActionType;
 use crate::PlayerColor;
 use crate::Squares;
 use std::rc::Rc;
@@ -30,6 +31,6 @@ impl Player for AiPlayer {
 
         let mut root = GameTreeNode::new(board, color, None);
         let (_, act) = root.evaluate(&simple_evaluator, 5);
-        act.unwrap()
+        act.unwrap_or(Action::new(color, ActionType::Pass))
     }
 }

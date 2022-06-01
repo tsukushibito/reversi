@@ -28,15 +28,30 @@ where
         }
     }
 
-    /// NegaMax法で評価
-    /// evaluator: 評価関数
-    /// depth: 読みの深さ
-    /// return: (評価値, 次の手)
     pub fn evaluate<F>(&mut self, evaluator: &F, depth: usize) -> (i32, Option<Action>)
     where
         F: Fn(&T, &PlayerColor) -> i32,
     {
-        if depth == 0 {
+        self.negamax(evaluator, depth, i32::MIN + 1, i32::MAX)
+    }
+
+    /// NegaMax法で評価
+    /// evaluator: 評価関数
+    /// depth: 読みの深さ
+    /// alpha: α値
+    /// beta: ベータ値
+    /// return: (評価値, 次の手)
+    fn negamax<F>(
+        &mut self,
+        evaluator: &F,
+        depth: usize,
+        alpha: i32,
+        beta: i32,
+    ) -> (i32, Option<Action>)
+    where
+        F: Fn(&T, &PlayerColor) -> i32,
+    {
+        if depth == 0 || self.board.is_game_over() {
             // リーフノードなので評価
             self.value = evaluator(&self.board, &self.player_color);
         } else {
@@ -61,37 +76,36 @@ where
                         .push(GameTreeNode::new(next.unwrap(), opponent, None));
                 }
 
-                // 子ノードを評価(NegaMaxなので符号反転)
-                let values = self
-                    .children
-                    .iter_mut()
-                    .map(|child| -child.evaluate(evaluator, depth - 1).0)
-                    .collect::<Vec<_>>();
-
-                // 子ノードの最大評価を自分の評価値とする
-                self.value = *values.iter().max().unwrap();
-
-                // 手の保存
-                let mut value_actions = values.iter().zip(actions);
-                self.action = Some(value_actions.find(|va| *va.0 == self.value).unwrap().1);
+                // NegaAlphaで評価
+                let mut alpha = alpha;
+                let mut value = i32::MIN + 1;
+                let mut index = 0;
+                for (i, child) in self.children.iter_mut().enumerate() {
+                    let v = -child.negamax(evaluator, depth - 1, -beta, -alpha).0;
+                    if v >= beta {
+                        break;
+                    }
+                    alpha = i32::max(alpha, v);
+                    if alpha > value {
+                        value = alpha;
+                        index = i;
+                    }
+                }
+                self.value = value;
+                self.action = Some(actions[index]);
             } else {
                 // パス時
-                // ゲーム終了判定
-                let opponent_movables = self.board.get_movable_positions(&opponent);
-                if opponent_movables.len() == 0 {
-                    // ゲーム終了なので評価処理実行
-                    self.value = evaluator(&self.board, &self.player_color);
-                } else {
-                    // ボードをコピーして展開
-                    self.children
-                        .push(GameTreeNode::new(self.board.duplicate(), opponent, None));
+                // ボードをコピーして展開
+                self.children
+                    .push(GameTreeNode::new(self.board.duplicate(), opponent, None));
 
-                    // 評価
-                    self.value = -(self.children[0].evaluate(evaluator, depth - 1).0);
+                // 評価
+                self.value = -(self.children[0]
+                    .negamax(evaluator, depth - 1, -beta, -alpha)
+                    .0);
 
-                    // 手はパス
-                    self.action = Some(Action::new(self.player_color, ActionType::Pass));
-                }
+                // 手はパス
+                self.action = Some(Action::new(self.player_color, ActionType::Pass));
             }
         }
         (self.value, self.action)
@@ -108,19 +122,18 @@ mod tests {
     use crate::ActionType;
     use crate::PlayerColor;
     use crate::Position;
-    use crate::Square;
     use std::rc::Rc;
 
     #[test]
     fn test_game_tree_evaluate() {
         let indexer = Rc::new(Indexer::new());
-        let board = IndexBoard::new_initial(indexer);
+        let board = IndexBoard::new_initial(indexer.clone());
         let mut node = GameTreeNode::new(board, PlayerColor::Black, None);
 
-        let value_action = node.evaluate(&simple_evaluator, 1);
+        let value_action = node.evaluate(&simple_evaluator, 2);
         assert_eq!(value_action.0, -3);
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
+        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(5, 4)));
         assert_eq!(value_action.1.unwrap(), act);
     }
 }
