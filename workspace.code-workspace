@@ -1,11 +1,10 @@
 {
 	"folders": [
 		{
-			"name": "root",
-			"path": "."
+			"path": "./rust_reversi"
 		},
 		{
-			"path": "./reversi"
+			"path": "./experimental"
 		}
 	],
 	"settings": {}

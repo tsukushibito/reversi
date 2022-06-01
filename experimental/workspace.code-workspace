@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "./reversi"
+		},
+		{
+			"path": "./reversi_ai"
+		}
+	],
+}

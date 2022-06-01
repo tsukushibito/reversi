@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+reversi = {path = "../reversi", editable = true}
+numpy = "*"
+
+[dev-packages]
+pylint = "*"
+autopep8 = "*"
+rope = "*"
+
+[requires]
+python_version = "3.8"
