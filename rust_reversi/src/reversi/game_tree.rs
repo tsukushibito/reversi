@@ -3,10 +3,7 @@ use crate::ActionType;
 use crate::Board;
 use crate::PlayerColor;
 
-pub struct GameTreeNode<T>
-where
-    T: Board,
-{
+pub struct GameTreeNode<T> {
     board: T,
     player_color: PlayerColor,
     value: i32,
