@@ -11,12 +11,16 @@ use std::rc::Rc;
 
 pub struct AiPlayer {
     indexer: Rc<Indexer>,
+    search_depth: usize,
 }
 
 impl AiPlayer {
-    pub fn new() -> AiPlayer {
+    pub fn new(search_depth: usize) -> AiPlayer {
         let indexer = Rc::new(Indexer::new());
-        AiPlayer { indexer: indexer }
+        AiPlayer {
+            indexer: indexer,
+            search_depth: search_depth,
+        }
     }
 }
 
@@ -30,7 +34,8 @@ impl Player for AiPlayer {
         };
 
         let mut root = GameTreeNode::new(board, color, None);
-        let (_, act) = root.evaluate(&simple_evaluator, 5);
+        let mut visited_count: usize = 0;
+        let (_, act) = root.search(&simple_evaluator, self.search_depth, &mut visited_count);
         act.unwrap_or(Action::new(color, ActionType::Pass))
     }
 }

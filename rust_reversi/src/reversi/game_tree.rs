@@ -28,29 +28,36 @@ where
         }
     }
 
-    pub fn evaluate<F>(&mut self, evaluator: &F, depth: usize) -> (i32, Option<Action>)
+    pub fn search<F>(
+        &mut self,
+        evaluator: &F,
+        depth: usize,
+        visited_count: &mut usize,
+    ) -> (i32, Option<Action>)
     where
         F: Fn(&T, &PlayerColor) -> i32,
     {
-        self.negamax(evaluator, depth, i32::MIN + 1, i32::MAX)
+        self.nega_alpha(evaluator, depth, i32::MIN + 1, i32::MAX, visited_count)
     }
 
-    /// NegaMax法で評価
+    /// NegaAlpha法で評価
     /// evaluator: 評価関数
     /// depth: 読みの深さ
     /// alpha: α値
     /// beta: ベータ値
     /// return: (評価値, 次の手)
-    fn negamax<F>(
+    fn nega_alpha<F>(
         &mut self,
         evaluator: &F,
         depth: usize,
         alpha: i32,
         beta: i32,
+        visited_count: &mut usize,
     ) -> (i32, Option<Action>)
     where
         F: Fn(&T, &PlayerColor) -> i32,
     {
+        *visited_count += 1;
         if depth == 0 || self.board.is_game_over() {
             // リーフノードなので評価
             self.value = evaluator(&self.board, &self.player_color);
@@ -78,20 +85,20 @@ where
 
                 // NegaAlphaで評価
                 let mut alpha = alpha;
-                let mut value = i32::MIN + 1;
                 let mut index = 0;
                 for (i, child) in self.children.iter_mut().enumerate() {
-                    let v = -child.negamax(evaluator, depth - 1, -beta, -alpha).0;
+                    let v = -child
+                        .nega_alpha(evaluator, depth - 1, -beta, -alpha, visited_count)
+                        .0;
                     if v >= beta {
                         break;
                     }
-                    alpha = i32::max(alpha, v);
-                    if alpha > value {
-                        value = alpha;
+                    if v > alpha {
+                        alpha = v;
                         index = i;
                     }
                 }
-                self.value = value;
+                self.value = alpha;
                 self.action = Some(actions[index]);
             } else {
                 // パス時
@@ -101,7 +108,7 @@ where
 
                 // 評価
                 self.value = -(self.children[0]
-                    .negamax(evaluator, depth - 1, -beta, -alpha)
+                    .nega_alpha(evaluator, depth - 1, -beta, -alpha, visited_count)
                     .0);
 
                 // 手はパス
@@ -130,10 +137,12 @@ mod tests {
         let board = IndexBoard::new_initial(indexer.clone());
         let mut node = GameTreeNode::new(board, PlayerColor::Black, None);
 
-        let value_action = node.evaluate(&simple_evaluator, 2);
-        assert_eq!(value_action.0, -3);
+        let mut visited_count: usize = 0;
+        let value_action = node.search(&simple_evaluator, 2, &mut visited_count);
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(5, 4)));
+        assert_eq!(value_action.0, -1);
+
+        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
         assert_eq!(value_action.1.unwrap(), act);
     }
 }
