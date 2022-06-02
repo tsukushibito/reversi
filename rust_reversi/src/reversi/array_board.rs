@@ -1,5 +1,11 @@
-use crate::*;
-use std::rc::Rc;
+use crate::Action;
+use crate::ActionType;
+use crate::Board;
+use crate::PlayerColor;
+use crate::Position;
+use crate::Square;
+use crate::Squares;
+use crate::BOARD_SIZE;
 
 const DIRECTIONS: [(i32, i32); BOARD_SIZE] = [
     (-1, -1),

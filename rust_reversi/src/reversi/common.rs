@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 pub const BOARD_SIZE: usize = 8;
 
 pub type Squares = [[Square; BOARD_SIZE]; BOARD_SIZE];
