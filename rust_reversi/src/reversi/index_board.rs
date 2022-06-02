@@ -112,7 +112,9 @@ impl IndexBoard {
     }
 }
 
-impl Board<IndexBoard> for IndexBoard {
+impl Board for IndexBoard {
+    type BoardType = IndexBoard;
+
     fn apply_action(&self, action: &Action) -> Option<IndexBoard> {
         match action.action {
             ActionType::Pass => {

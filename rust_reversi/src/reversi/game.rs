@@ -6,7 +6,7 @@ pub struct Game<T, U, V>
 where
     T: Player,
     U: Player,
-    V: Board<V>,
+    V: Board,
 {
     board: Rc<V>,
     black_player: T,
@@ -19,7 +19,7 @@ impl<T, U, V> Game<T, U, V>
 where
     T: Player,
     U: Player,
-    V: Board<V>,
+    V: Board<BoardType = V>,
 {
     pub fn new(initial_board: Rc<V>, black_player: T, white_player: U) -> Game<T, U, V> {
         Game {

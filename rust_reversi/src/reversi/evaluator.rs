@@ -4,7 +4,7 @@ use crate::Square;
 
 pub fn simple_evaluator<T>(board: &T, color: &PlayerColor) -> i32
 where
-    T: Board<T>,
+    T: Board,
 {
     let weight_table: [i32; 64] = [
         30, -12, 0, -1, -1, 0, -12, 30, //
