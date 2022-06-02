@@ -42,13 +42,13 @@ where
             };
 
             if let Some(next_board) = self.board.apply_action(&action) {
-                if next_board.is_game_over() {
-                    break;
-                }
-
                 self.depth += 1;
                 self.board_history.push(self.board.clone());
                 self.board = Rc::new(next_board);
+
+                if self.board.is_game_over() {
+                    break;
+                }
             }
         }
     }
