@@ -1,8 +1,8 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use reversi::board::array_board::ArrayBoard;
-use reversi::board::index_board::IndexBoard;
-use reversi::board::indexer::Indexer;
+use reversi::board::ArrayBoard;
 use reversi::board::Board;
+use reversi::board::IndexBoard;
+use reversi::board::Indexer;
 use reversi::Action;
 use reversi::ActionType;
 use reversi::PlayerColor;
