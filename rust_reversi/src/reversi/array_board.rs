@@ -71,8 +71,6 @@ impl ArrayBoard {
 }
 
 impl Board for ArrayBoard {
-    type BoardType = ArrayBoard;
-
     fn apply_action(&self, action: &Action) -> Option<ArrayBoard> {
         match action.action {
             ActionType::Pass => {

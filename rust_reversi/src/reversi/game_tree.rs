@@ -16,7 +16,7 @@ where
 
 impl<T> GameTreeNode<T>
 where
-    T: Board<BoardType = T>,
+    T: Board,
 {
     pub fn new(board: T, color: PlayerColor, action: Option<Action>) -> GameTreeNode<T> {
         GameTreeNode {

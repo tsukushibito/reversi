@@ -19,7 +19,7 @@ impl<T, U, V> Game<T, U, V>
 where
     T: Player,
     U: Player,
-    V: Board<BoardType = V>,
+    V: Board,
 {
     pub fn new(initial_board: Rc<V>, black_player: T, white_player: U) -> Game<T, U, V> {
         Game {
