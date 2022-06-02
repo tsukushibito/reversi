@@ -28,11 +28,16 @@ where
         }
     }
 
-    pub fn search<F>(&mut self, evaluator: &F, depth: usize) -> (i32, Option<Action>)
+    pub fn search<F>(
+        &mut self,
+        evaluator: &F,
+        depth: usize,
+        visited_count: &mut usize,
+    ) -> (i32, Option<Action>)
     where
         F: Fn(&T, &PlayerColor) -> i32,
     {
-        self.nega_alpha(evaluator, depth, i32::MIN + 1, i32::MAX)
+        self.nega_alpha(evaluator, depth, i32::MIN + 1, i32::MAX, visited_count)
     }
 
     /// NegaAlpha法で評価
@@ -47,10 +52,12 @@ where
         depth: usize,
         alpha: i32,
         beta: i32,
+        visited_count: &mut usize,
     ) -> (i32, Option<Action>)
     where
         F: Fn(&T, &PlayerColor) -> i32,
     {
+        *visited_count += 1;
         if depth == 0 || self.board.is_game_over() {
             // リーフノードなので評価
             self.value = evaluator(&self.board, &self.player_color);
@@ -80,7 +87,9 @@ where
                 let mut alpha = alpha;
                 let mut index = 0;
                 for (i, child) in self.children.iter_mut().enumerate() {
-                    let v = -child.nega_alpha(evaluator, depth - 1, -beta, -alpha).0;
+                    let v = -child
+                        .nega_alpha(evaluator, depth - 1, -beta, -alpha, visited_count)
+                        .0;
                     if v >= beta {
                         break;
                     }
@@ -99,7 +108,7 @@ where
 
                 // 評価
                 self.value = -(self.children[0]
-                    .nega_alpha(evaluator, depth - 1, -beta, -alpha)
+                    .nega_alpha(evaluator, depth - 1, -beta, -alpha, visited_count)
                     .0);
 
                 // 手はパス
@@ -128,7 +137,9 @@ mod tests {
         let board = IndexBoard::new_initial(indexer.clone());
         let mut node = GameTreeNode::new(board, PlayerColor::Black, None);
 
-        let value_action = node.search(&simple_evaluator, 2);
+        let mut visited_count: usize = 0;
+        let value_action = node.search(&simple_evaluator, 2, &mut visited_count);
+
         assert_eq!(value_action.0, -1);
 
         let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));

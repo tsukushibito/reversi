@@ -34,7 +34,8 @@ impl Player for AiPlayer {
         };
 
         let mut root = GameTreeNode::new(board, color, None);
-        let (_, act) = root.search(&simple_evaluator, self.search_depth);
+        let mut visited_count: usize = 0;
+        let (_, act) = root.search(&simple_evaluator, self.search_depth, &mut visited_count);
         act.unwrap_or(Action::new(color, ActionType::Pass))
     }
 }
