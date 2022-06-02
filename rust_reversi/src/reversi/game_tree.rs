@@ -131,9 +131,9 @@ mod tests {
         let mut node = GameTreeNode::new(board, PlayerColor::Black, None);
 
         let value_action = node.evaluate(&simple_evaluator, 2);
-        assert_eq!(value_action.0, -3);
+        assert_eq!(value_action.0, -1);
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(5, 4)));
+        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
         assert_eq!(value_action.1.unwrap(), act);
     }
 }
