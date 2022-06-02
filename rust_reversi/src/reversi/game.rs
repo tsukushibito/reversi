@@ -1,5 +1,5 @@
+use crate::board::Board;
 use crate::player::Player;
-use crate::Board;
 use std::rc::Rc;
 
 pub struct Game<T, U, V>
@@ -57,9 +57,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::array_board::ArrayBoard;
-    use crate::index_board::IndexBoard;
-    use crate::indexer::Indexer;
+    use crate::board::ArrayBoard;
+    use crate::board::IndexBoard;
+    use crate::board::Indexer;
     use crate::Action;
     use crate::ActionType;
     use crate::PlayerColor;

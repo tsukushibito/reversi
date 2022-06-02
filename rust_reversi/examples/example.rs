@@ -1,7 +1,7 @@
-﻿use reversi::ai_player::AiPlayer;
+﻿use reversi::board::IndexBoard;
+use reversi::board::Indexer;
 use reversi::game::Game;
-use reversi::index_board::IndexBoard;
-use reversi::indexer::Indexer;
+use reversi::player::AiPlayer;
 use reversi::player::ConsoleIoPlayer;
 use std::rc::Rc;
 

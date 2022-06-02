@@ -1,7 +1,7 @@
+use crate::board::IndexBoard;
+use crate::board::Indexer;
 use crate::evaluator::simple_evaluator;
 use crate::game_tree::GameTreeNode;
-use crate::index_board::IndexBoard;
-use crate::indexer::Indexer;
 use crate::player::Player;
 use crate::Action;
 use crate::ActionType;

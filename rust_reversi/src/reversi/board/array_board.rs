@@ -1,6 +1,6 @@
+use crate::board::Board;
 use crate::Action;
 use crate::ActionType;
-use crate::Board;
 use crate::PlayerColor;
 use crate::Position;
 use crate::Square;

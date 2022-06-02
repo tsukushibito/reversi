@@ -1,5 +1,6 @@
-﻿use crate::indexer::FlipInfo;
-use crate::indexer::Indexer;
+﻿use crate::board::indexer::FlipInfo;
+use crate::board::indexer::Indexer;
+use crate::board::Board;
 use crate::*;
 use std::rc::Rc;
 

@@ -1,6 +1,5 @@
-use crate::Board;
-use crate::PlayerColor;
-use crate::Square;
+use crate::board::Board;
+use crate::reversi::common::*;
 
 pub fn simple_evaluator<T>(board: &T, color: &PlayerColor) -> i32
 where

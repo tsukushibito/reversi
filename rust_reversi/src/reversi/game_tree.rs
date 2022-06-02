@@ -1,6 +1,6 @@
+use crate::board::Board;
 use crate::Action;
 use crate::ActionType;
-use crate::Board;
 use crate::PlayerColor;
 
 pub struct GameTreeNode<T> {
@@ -118,10 +118,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::board::IndexBoard;
+    use crate::board::Indexer;
     use crate::evaluator::simple_evaluator;
     use crate::game_tree::GameTreeNode;
-    use crate::index_board::IndexBoard;
-    use crate::indexer::Indexer;
     use crate::Action;
     use crate::ActionType;
     use crate::PlayerColor;

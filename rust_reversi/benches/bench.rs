@@ -1,10 +1,10 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use reversi::array_board::ArrayBoard;
-use reversi::index_board::IndexBoard;
-use reversi::indexer::Indexer;
+use reversi::board::array_board::ArrayBoard;
+use reversi::board::index_board::IndexBoard;
+use reversi::board::indexer::Indexer;
+use reversi::board::Board;
 use reversi::Action;
 use reversi::ActionType;
-use reversi::Board;
 use reversi::PlayerColor;
 use reversi::Position;
 use std::rc::Rc;
