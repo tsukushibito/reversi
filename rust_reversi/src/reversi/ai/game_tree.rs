@@ -1,10 +1,9 @@
+use crate::ai::Eval;
 use crate::board::Board;
-use crate::evaluator::Eval;
 use crate::Action;
 use crate::ActionType;
 use crate::PlayerColor;
 use std::collections::HashMap;
-use std::marker::PhantomData;
 
 #[derive(Debug)]
 pub enum SearchType {
@@ -210,9 +209,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ai::SimpleEvaluator;
     use crate::board::IndexBoard;
     use crate::board::Indexer;
-    use crate::evaluator::SimpleEvaluator;
     use crate::Action;
     use crate::ActionType;
     use crate::PlayerColor;

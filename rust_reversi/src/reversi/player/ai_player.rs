@@ -1,8 +1,8 @@
+use crate::ai::GameTreeNode;
+use crate::ai::SearchType;
+use crate::ai::SimpleEvaluator;
 use crate::board::IndexBoard;
 use crate::board::Indexer;
-use crate::evaluator::SimpleEvaluator;
-use crate::game_tree::GameTreeNode;
-use crate::game_tree::SearchType;
 use crate::player::Player;
 use crate::Action;
 use crate::ActionType;
