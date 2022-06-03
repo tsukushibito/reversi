@@ -19,7 +19,7 @@ const DIRECTIONS: [(i32, i32); BOARD_SIZE] = [
 ];
 
 /// ボード
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ArrayBoard {
     pub squares: Squares,
 }

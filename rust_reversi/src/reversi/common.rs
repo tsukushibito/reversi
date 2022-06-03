@@ -11,7 +11,7 @@ pub enum LineDirection {
 }
 
 /// マスの状態
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Square {
     Empty = 0,
     Black = 1,

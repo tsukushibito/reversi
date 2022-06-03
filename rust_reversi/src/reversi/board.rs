@@ -1,10 +1,12 @@
 use crate::reversi::common::*;
 
 mod array_board;
+mod bit_board;
 mod index_board;
 mod indexer;
 
 pub use array_board::ArrayBoard;
+pub use bit_board::BitBoard;
 pub use index_board::IndexBoard;
 pub use indexer::Indexer;
 
