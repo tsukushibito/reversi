@@ -1,6 +1,6 @@
-use crate::ai::GameTreeNode;
+use crate::ai::search_game_tree;
+use crate::ai::simple_evaluate;
 use crate::ai::SearchType;
-use crate::ai::SimpleEvaluator;
 use crate::board::IndexBoard;
 use crate::board::Indexer;
 use crate::player::Player;
@@ -34,13 +34,10 @@ impl Player for AiPlayer {
             PlayerColor::White
         };
 
-        let mut root = GameTreeNode::new(board, color, None);
-        let mut visited_count: usize = 0;
-        let (_, act) = root.search::<SimpleEvaluator<IndexBoard>>(
-            &SearchType::NegaAlpha,
-            self.search_depth,
-            &mut visited_count,
-        );
-        act.unwrap_or(Action::new(color, ActionType::Pass))
+        let result = search_game_tree(&board, &color, &simple_evaluate, &SearchType::NegaAlpha, 7);
+
+        result
+            .action
+            .unwrap_or(Action::new(color, ActionType::Pass))
     }
 }

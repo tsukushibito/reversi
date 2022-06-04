@@ -63,16 +63,35 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug benchmark 'bench'",
+            "name": "Debug benchmark 'board_bench'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bench=bench",
+                    "--bench=board_bench",
                     "--package=reversi"
                 ],
                 "filter": {
-                    "name": "bench",
+                    "name": "board_bench",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'search_bench'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=search_bench",
+                    "--package=reversi"
+                ],
+                "filter": {
+                    "name": "search_bench",
                     "kind": "bench"
                 }
             },

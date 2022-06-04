@@ -12,5 +12,9 @@ criterion = "0.3"
 name = "example"
 
 [[bench]]
-name = "bench"
+name = "board_bench"
+harness = false
+
+[[bench]]
+name = "search_bench"
 harness = false

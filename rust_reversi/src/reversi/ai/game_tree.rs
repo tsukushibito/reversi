@@ -1,9 +1,7 @@
-use crate::ai::Eval;
 use crate::board::Board;
 use crate::Action;
 use crate::ActionType;
 use crate::PlayerColor;
-use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum SearchType {
@@ -24,10 +22,10 @@ impl<T> GameTreeNode<T>
 where
     T: Board,
 {
-    pub fn new(board: T, color: PlayerColor, action: Option<Action>) -> GameTreeNode<T> {
+    pub fn new(board: &T, color: &PlayerColor, action: Option<Action>) -> GameTreeNode<T> {
         GameTreeNode {
-            board: board,
-            player_color: color,
+            board: board.duplicate(),
+            player_color: *color,
             value: 0,
             action: action,
             children: Default::default(),
@@ -36,18 +34,19 @@ where
 
     pub fn search<E>(
         &mut self,
+        evaluator: &E,
         search_type: &SearchType,
         depth: usize,
-        visited_count: &mut usize,
+        searched_nodes: &mut usize,
     ) -> (i32, Option<Action>)
     where
-        E: Eval<BoardType = T>,
+        E: Fn(&T, &PlayerColor) -> i32,
     {
         match search_type {
             SearchType::NegaAlpha => {
-                self.nega_alpha::<E>(depth, i32::MIN + 1, i32::MAX, visited_count)
+                self.nega_alpha(evaluator, depth, i32::MIN + 1, i32::MAX, searched_nodes)
             }
-            SearchType::NegaMax => self.nega_max::<E>(depth, visited_count),
+            SearchType::NegaMax => self.nega_max(evaluator, depth, searched_nodes),
         }
     }
 
@@ -59,18 +58,19 @@ where
     /// return: (評価値, 次の手)
     fn nega_alpha<E>(
         &mut self,
+        evaluator: &E,
         depth: usize,
         alpha: i32,
         beta: i32,
-        visited_count: &mut usize,
+        searched_nodes: &mut usize,
     ) -> (i32, Option<Action>)
     where
-        E: Eval<BoardType = T>,
+        E: Fn(&T, &PlayerColor) -> i32,
     {
-        *visited_count += 1;
+        *searched_nodes += 1;
         if depth == 0 || self.board.is_game_over() {
             // リーフノードなので評価
-            self.value = E::evaluate(&self.board, &self.player_color);
+            self.value = evaluator(&self.board, &self.player_color);
         } else {
             // ノードの処理
             let opponent = if self.player_color == PlayerColor::Black {
@@ -90,7 +90,7 @@ where
                 for act in &actions {
                     let next = self.board.apply_action(&act);
                     self.children
-                        .push(GameTreeNode::new(next.unwrap(), opponent, None));
+                        .push(GameTreeNode::new(&next.unwrap(), &opponent, None));
                 }
 
                 // NegaAlphaで評価
@@ -98,7 +98,7 @@ where
                 let mut index = 0;
                 for (i, child) in self.children.iter_mut().enumerate() {
                     let v = -child
-                        .nega_alpha::<E>(depth - 1, -beta, -alpha, visited_count)
+                        .nega_alpha(evaluator, depth - 1, -beta, -alpha, searched_nodes)
                         .0;
                     if v >= beta {
                         break;
@@ -114,11 +114,11 @@ where
                 // パス時
                 // ボードをコピーして展開
                 self.children
-                    .push(GameTreeNode::new(self.board.duplicate(), opponent, None));
+                    .push(GameTreeNode::new(&self.board.duplicate(), &opponent, None));
 
                 // 評価
                 self.value = -(self.children[0]
-                    .nega_alpha::<E>(depth - 1, -beta, -alpha, visited_count)
+                    .nega_alpha(evaluator, depth - 1, -beta, -alpha, searched_nodes)
                     .0);
 
                 // 手はパス
@@ -128,14 +128,19 @@ where
         (self.value, self.action)
     }
 
-    fn nega_max<E>(&mut self, depth: usize, visited_count: &mut usize) -> (i32, Option<Action>)
+    fn nega_max<E>(
+        &mut self,
+        evaluator: &E,
+        depth: usize,
+        searched_nodes: &mut usize,
+    ) -> (i32, Option<Action>)
     where
-        E: Eval<BoardType = T>,
+        E: Fn(&T, &PlayerColor) -> i32,
     {
-        *visited_count += 1;
+        *searched_nodes += 1;
         if depth == 0 || self.board.is_game_over() {
             // リーフノードなので評価
-            self.value = E::evaluate(&self.board, &self.player_color);
+            self.value = evaluator(&self.board, &self.player_color);
         } else {
             // ノードの処理
             let opponent = if self.player_color == PlayerColor::Black {
@@ -155,13 +160,13 @@ where
                 for act in &actions {
                     let next = self.board.apply_action(&act);
                     self.children
-                        .push(GameTreeNode::new(next.unwrap(), opponent, None));
+                        .push(GameTreeNode::new(&next.unwrap(), &opponent, None));
                 }
 
                 let mut value = i32::MIN + 1;
                 let mut index = 0;
                 for (i, child) in self.children.iter_mut().enumerate() {
-                    let v = -child.nega_max::<E>(depth - 1, visited_count).0;
+                    let v = -child.nega_max(evaluator, depth - 1, searched_nodes).0;
                     if v > value {
                         value = v;
                         index = i;
@@ -173,10 +178,12 @@ where
                 // パス時
                 // ボードをコピーして展開
                 self.children
-                    .push(GameTreeNode::new(self.board.duplicate(), opponent, None));
+                    .push(GameTreeNode::new(&self.board, &opponent, None));
 
                 // 評価
-                self.value = -(self.children[0].nega_max::<E>(depth - 1, visited_count).0);
+                self.value = -(self.children[0]
+                    .nega_max(evaluator, depth - 1, searched_nodes)
+                    .0);
 
                 // 手はパス
                 self.action = Some(Action::new(self.player_color, ActionType::Pass));
@@ -186,30 +193,37 @@ where
     }
 }
 
-#[derive(Debug)]
-pub struct GameTree<T> {
-    root: GameTreeNode<T>,
-    visited_count: usize,
-    hash_table: HashMap<u64, i32>,
+pub struct SearchResult {
+    pub value: i32,
+    pub action: Option<Action>,
+    pub searched_nodes: usize,
 }
 
-impl<T> GameTree<T>
+pub fn search_game_tree<T, E>(
+    board: &T,
+    color: &PlayerColor,
+    evaluator: &E,
+    search_type: &SearchType,
+    depth: usize,
+) -> SearchResult
 where
     T: Board,
+    E: Fn(&T, &PlayerColor) -> i32,
 {
-    fn new(board: T, color: PlayerColor) -> GameTree<T> {
-        GameTree {
-            root: GameTreeNode::new(board, color, None),
-            visited_count: 0,
-            hash_table: Default::default(),
-        }
+    let mut root = GameTreeNode::new(board, color, None);
+    let mut searched_nodes = 0;
+    let (value, action) = root.search(evaluator, search_type, depth, &mut searched_nodes);
+    SearchResult {
+        value: value,
+        action: action,
+        searched_nodes: searched_nodes,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ai::SimpleEvaluator;
+    use crate::ai::simple_evaluate;
     use crate::board::IndexBoard;
     use crate::board::Indexer;
     use crate::Action;
@@ -222,13 +236,14 @@ mod tests {
     fn test_game_tree_negaalpha_search() {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer.clone());
-        let mut node = GameTreeNode::new(board, PlayerColor::Black, None);
+        let mut node = GameTreeNode::new(&board, &PlayerColor::Black, None);
 
-        let mut visited_count: usize = 0;
-        let value_action = node.search::<SimpleEvaluator<IndexBoard>>(
+        let mut searched_nodes: usize = 0;
+        let value_action = node.search(
+            &simple_evaluate,
             &SearchType::NegaAlpha,
             2,
-            &mut visited_count,
+            &mut searched_nodes,
         );
 
         assert_eq!(value_action.0, -1);
@@ -241,15 +256,52 @@ mod tests {
     fn test_game_tree_negamax_search() {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer.clone());
-        let mut node = GameTreeNode::new(board, PlayerColor::Black, None);
+        let mut node = GameTreeNode::new(&board, &PlayerColor::Black, None);
 
-        let mut visited_count: usize = 0;
-        let value_action =
-            node.search::<SimpleEvaluator<IndexBoard>>(&SearchType::NegaMax, 2, &mut visited_count);
+        let mut searched_nodes: usize = 0;
+        let value_action = node.search(
+            &simple_evaluate,
+            &SearchType::NegaMax,
+            2,
+            &mut searched_nodes,
+        );
 
         assert_eq!(value_action.0, -1);
 
         let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
         assert_eq!(value_action.1.unwrap(), act);
+    }
+    #[test]
+    fn test_search_game_tree() {
+        let indexer = Rc::new(Indexer::new());
+        let board = IndexBoard::new_initial(indexer.clone());
+        let depth = 7;
+
+        let nega_max_result = search_game_tree(
+            &board,
+            &PlayerColor::Black,
+            &simple_evaluate,
+            &SearchType::NegaMax,
+            depth,
+        );
+        assert!(nega_max_result.action != None);
+        println!(
+            "[NegaMax] depth: {},  searched_nodes: {}",
+            depth, nega_max_result.searched_nodes
+        );
+
+        let nega_alpha_result = search_game_tree(
+            &board,
+            &PlayerColor::Black,
+            &simple_evaluate,
+            &SearchType::NegaAlpha,
+            depth,
+        );
+        assert!(nega_alpha_result.action != None);
+        println!(
+            "[NegaAlpha] depth: {},  searched_nodes: {}",
+            depth, nega_alpha_result.searched_nodes
+        );
+        assert!(nega_alpha_result.searched_nodes < nega_max_result.searched_nodes);
     }
 }
