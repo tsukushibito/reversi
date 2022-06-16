@@ -43,6 +43,12 @@ impl Indexer {
     }
 }
 
+impl Default for Indexer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 fn index_to_line(index: usize) -> Vec<Square> {
     let mut line = Vec::new();
     for _ in 0..BOARD_SIZE {
@@ -50,14 +56,14 @@ fn index_to_line(index: usize) -> Vec<Square> {
     }
 
     let mut i = index;
-    for n in 0..BOARD_SIZE {
-        line[n] = match i % 3 {
+    for l in line.iter_mut() {
+        *l = match i % 3 {
             0 => Square::Empty,
             1 => Square::Black,
             2 => Square::White,
             _ => Square::Empty,
         };
-        i = i / 3;
+        i /= 3;
     }
 
     line
@@ -87,8 +93,7 @@ fn create_mobility_table(color: PlayerColor) -> Vec<MobilityInfo> {
         table.push(MobilityInfo::default());
     }
 
-    for i in 0..INDEX_COUNT {
-        let info = &mut table[i];
+    for (i, info) in table.iter_mut().enumerate() {
         let line = index_to_line(i);
 
         for pos in 0..BOARD_SIZE as i32 {

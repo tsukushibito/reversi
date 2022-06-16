@@ -9,6 +9,12 @@ impl ConsoleIoPlayer {
     }
 }
 
+impl Default for ConsoleIoPlayer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Player for ConsoleIoPlayer {
     fn take_action(&mut self, depth: u32, squares: &Squares) -> Action {
         println!("[{}]", depth);

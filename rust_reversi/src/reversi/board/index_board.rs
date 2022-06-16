@@ -7,7 +7,7 @@ use std::rc::Rc;
 /// ボード
 #[derive(Clone)]
 pub struct IndexBoard {
-    pub squares: Squares,
+    squares: Squares,
     indexer: Rc<Indexer>,
 }
 
@@ -24,10 +24,7 @@ impl IndexBoard {
     }
 
     pub fn new(squares: Squares, indexer: Rc<Indexer>) -> IndexBoard {
-        IndexBoard {
-            squares: squares,
-            indexer: indexer,
-        }
+        IndexBoard { squares, indexer }
     }
 
     fn get_flip_infos(
@@ -70,8 +67,8 @@ impl IndexBoard {
                 line
             }
             LineDirection::Top2Bottom => {
-                for i in 0..BOARD_SIZE {
-                    line[i] = self.squares[i][pos.1];
+                for (i, l) in line.iter_mut().enumerate() {
+                    *l = self.squares[i][pos.1];
                 }
                 line
             }
@@ -80,8 +77,8 @@ impl IndexBoard {
                 let col = pos.1 as i32;
                 let mut r = (row - col).max(0) as usize;
                 let mut c = (col - row).max(0) as usize;
-                for i in 0..BOARD_SIZE {
-                    line[i] = self.squares[r][c];
+                for l in line.iter_mut() {
+                    *l = self.squares[r][c];
                     r += 1;
                     c += 1;
                     if r >= BOARD_SIZE || c >= BOARD_SIZE {
@@ -95,8 +92,8 @@ impl IndexBoard {
                 let col = pos.1 as i32;
                 let mut r = (row + col).min(BOARD_SIZE as i32 - 1);
                 let mut c = (row + col - (BOARD_SIZE as i32 - 1)).max(0);
-                for i in 0..BOARD_SIZE {
-                    line[i] = self.squares[r as usize][c as usize];
+                for l in line.iter_mut() {
+                    *l = self.squares[r as usize][c as usize];
                     r -= 1;
                     c += 1;
                     if r < 0 || c >= BOARD_SIZE as i32 {
@@ -109,7 +106,7 @@ impl IndexBoard {
     }
 
     fn can_pass(&self, color: &PlayerColor) -> bool {
-        self.get_movable_positions(color).len() == 0
+        self.get_movable_positions(color).is_empty()
     }
 }
 
@@ -145,7 +142,7 @@ impl Board for IndexBoard {
                     return None;
                 }
 
-                let mut squares = self.squares.clone();
+                let mut squares = self.squares;
 
                 let square_color = match action.color {
                     PlayerColor::Black => Square::Black,
@@ -208,7 +205,7 @@ impl Board for IndexBoard {
         let mut positions: Vec<Position> = Vec::new();
         for r in 0..BOARD_SIZE {
             for c in 0..BOARD_SIZE {
-                let (l2r, t2b, tl2br, bl2tr) = self.get_flip_infos(&color, &Position(r, c));
+                let (l2r, t2b, tl2br, bl2tr) = self.get_flip_infos(color, &Position(r, c));
                 let count =
                     l2r.flip_count() + t2b.flip_count() + tl2br.flip_count() + bl2tr.flip_count();
                 if count > 0 {

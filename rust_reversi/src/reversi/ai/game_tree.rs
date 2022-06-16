@@ -27,7 +27,7 @@ where
             board: board.duplicate(),
             player_color: *color,
             value: 0,
-            action: action,
+            action,
             children: Default::default(),
         }
     }
@@ -54,10 +54,10 @@ where
         depth == 0 || self.board.is_game_over()
     }
 
-    fn expand(&mut self, actions: &Vec<Action>) {
+    fn expand(&mut self, actions: &[Action]) {
         // 展開
         for act in actions {
-            let next = self.board.apply_action(&act);
+            let next = self.board.apply_action(act);
             self.children.push(GameTreeNode::new(
                 &next.unwrap(),
                 &self.player_color.opponent(),
@@ -89,7 +89,7 @@ where
             self.value = evaluator(&self.board, &self.player_color);
         } else {
             let positions = self.board.get_movable_positions(&self.player_color);
-            if positions.len() > 0 {
+            if !positions.is_empty() {
                 let actions = positions
                     .iter()
                     .map(|p| Action::new(self.player_color, ActionType::Move(*p)))
@@ -151,7 +151,7 @@ where
             self.value = evaluator(&self.board, &self.player_color);
         } else {
             let positions = self.board.get_movable_positions(&self.player_color);
-            if positions.len() > 0 {
+            if !positions.is_empty() {
                 let actions = positions
                     .iter()
                     .map(|p| Action::new(self.player_color, ActionType::Move(*p)))
@@ -209,9 +209,9 @@ where
     let mut searched_nodes = 0;
     let (value, action) = root.search(evaluator, search_type, depth, &mut searched_nodes);
     SearchResult {
-        value: value,
-        action: action,
-        searched_nodes: searched_nodes,
+        value,
+        action,
+        searched_nodes,
     }
 }
 

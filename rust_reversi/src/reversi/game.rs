@@ -24,8 +24,8 @@ where
     pub fn new(initial_board: Rc<V>, black_player: T, white_player: U) -> Game<T, U, V> {
         Game {
             board: initial_board,
-            black_player: black_player,
-            white_player: white_player,
+            black_player,
+            white_player,
             depth: 0,
             board_history: Default::default(),
         }
@@ -68,15 +68,14 @@ mod tests {
     use std::rc::Rc;
 
     struct Test1Player {
-        board: IndexBoard,
+        indexer: Rc<Indexer>,
     }
 
     /// 左上優先で置けるところに置いていくプレイヤー
     impl Test1Player {
         fn new() -> Test1Player {
-            let indexer = Rc::new(Indexer::new());
             Test1Player {
-                board: IndexBoard::new_initial(indexer),
+                indexer: Rc::new(Indexer::new()),
             }
         }
     }
@@ -89,8 +88,8 @@ mod tests {
                 PlayerColor::White
             };
 
-            self.board.squares = squares.clone();
-            let positions = self.board.get_movable_positions(&color);
+            let board = IndexBoard::new(squares.clone(), self.indexer.clone());
+            let positions = board.get_movable_positions(&color);
 
             if positions.len() == 0 {
                 return Action::new(color, ActionType::Pass);

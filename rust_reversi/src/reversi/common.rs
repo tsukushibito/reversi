@@ -54,9 +54,6 @@ pub struct Action {
 
 impl Action {
     pub fn new(color: PlayerColor, action: ActionType) -> Action {
-        Action {
-            color: color,
-            action: action,
-        }
+        Action { color, action }
     }
 }

@@ -21,7 +21,7 @@ const DIRECTIONS: [(i32, i32); BOARD_SIZE] = [
 /// ボード
 #[derive(Clone, Debug)]
 pub struct ArrayBoard {
-    pub squares: Squares,
+    squares: Squares,
 }
 
 impl ArrayBoard {
@@ -37,7 +37,7 @@ impl ArrayBoard {
     }
 
     pub fn new(squares: Squares) -> ArrayBoard {
-        ArrayBoard { squares: squares }
+        ArrayBoard { squares }
     }
 
     fn get_flip_count(&self, color: &PlayerColor, pos: &(usize, usize), dir: &(i32, i32)) -> i32 {
@@ -55,8 +55,8 @@ impl ArrayBoard {
             if s == color || s == Square::Empty {
                 break;
             }
-            r = r + dir.0;
-            c = c + dir.1;
+            r += dir.0;
+            c += dir.1;
         }
 
         if is_valid_pos((r, c)) && self.squares[r as usize][c as usize] == color {
@@ -76,7 +76,7 @@ impl Board for ArrayBoard {
             ActionType::Pass => {
                 // パスできるかチェック
                 let movables = self.get_movable_positions(&action.color);
-                if movables.len() == 0 {
+                if movables.is_empty() {
                     Some(self.clone())
                 } else {
                     None
@@ -88,11 +88,11 @@ impl Board for ArrayBoard {
                     return None;
                 }
                 let movables = self.get_movable_positions(&action.color);
-                if let Option::Some(_) = movables
+                if movables
                     .iter()
-                    .find(|p| p.0 == position.0 && p.1 == position.1)
+                    .any(|p| p.0 == position.0 && p.1 == position.1)
                 {
-                    let mut squares = self.squares.clone();
+                    let mut squares = self.squares;
 
                     let square_color = match action.color {
                         PlayerColor::Black => Square::Black,
@@ -114,7 +114,7 @@ impl Board for ArrayBoard {
 
                     Some(ArrayBoard::new(squares))
                 } else {
-                    return None;
+                    None
                 }
             }
         }

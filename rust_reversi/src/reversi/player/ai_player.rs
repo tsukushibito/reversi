@@ -19,8 +19,8 @@ impl AiPlayer {
     pub fn new(search_depth: usize) -> AiPlayer {
         let indexer = Rc::new(Indexer::new());
         AiPlayer {
-            indexer: indexer,
-            search_depth: search_depth,
+            indexer,
+            search_depth,
         }
     }
 }
@@ -44,6 +44,6 @@ impl Player for AiPlayer {
 
         result
             .action
-            .unwrap_or(Action::new(color, ActionType::Pass))
+            .unwrap_or_else(|| Action::new(color, ActionType::Pass))
     }
 }
