@@ -24,8 +24,8 @@ impl IndexBoard {
 
     pub fn new(squares: Squares, indexer: Rc<Indexer>) -> IndexBoard {
         IndexBoard {
-            squares: squares,
-            indexer: indexer,
+            squares,
+            indexer,
         }
     }
 

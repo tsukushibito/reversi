@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn test_game_tree_negaalpha_search() {
         let indexer = Rc::new(Indexer::new());
-        let board = IndexBoard::new_initial(indexer.clone());
+        let board = IndexBoard::new_initial(indexer);
         let mut node = GameTreeNode::new(&board, &PlayerColor::Black, None);
 
         let mut searched_nodes: usize = 0;
@@ -250,7 +250,7 @@ mod tests {
     #[test]
     fn test_game_tree_negamax_search() {
         let indexer = Rc::new(Indexer::new());
-        let board = IndexBoard::new_initial(indexer.clone());
+        let board = IndexBoard::new_initial(indexer);
         let mut node = GameTreeNode::new(&board, &PlayerColor::Black, None);
 
         let mut searched_nodes: usize = 0;
@@ -269,7 +269,7 @@ mod tests {
     #[test]
     fn test_search_game_tree() {
         let indexer = Rc::new(Indexer::new());
-        let board = IndexBoard::new_initial(indexer.clone());
+        let board = IndexBoard::new_initial(indexer);
         let depth = 7;
 
         let nega_max_result = search_game_tree(

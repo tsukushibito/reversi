@@ -8,7 +8,7 @@ fn nega_max(c: &mut Criterion) {
         b.iter(|| {
             let indexer = Rc::new(Indexer::new());
             let board = IndexBoard::new_initial(indexer);
-            let result = ai::search_game_tree(
+            let _result = ai::search_game_tree(
                 &board,
                 &PlayerColor::Black,
                 &ai::simple_evaluate,
@@ -25,7 +25,7 @@ fn nega_alpha(c: &mut Criterion) {
         b.iter(|| {
             let indexer = Rc::new(Indexer::new());
             let board = IndexBoard::new_initial(indexer);
-            let result = ai::search_game_tree(
+            let _result = ai::search_game_tree(
                 &board,
                 &PlayerColor::Black,
                 &ai::simple_evaluate,

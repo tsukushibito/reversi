@@ -88,10 +88,10 @@ mod tests {
                 PlayerColor::White
             };
 
-            let board = IndexBoard::new(squares.clone(), self.indexer.clone());
+            let board = IndexBoard::new(*squares, self.indexer.clone());
             let positions = board.get_movable_positions(&color);
 
-            if positions.len() == 0 {
+            if positions.is_empty() {
                 return Action::new(color, ActionType::Pass);
             }
 

@@ -32,7 +32,7 @@ fn index_board(c: &mut Criterion) {
             for _ in 0..1000 {
                 let mut board = IndexBoard::new_initial(indexer.clone());
                 for action in &actions {
-                    board = board.apply_action(&action).unwrap();
+                    board = board.apply_action(action).unwrap();
                 }
             }
         })
@@ -46,7 +46,7 @@ fn array_board(c: &mut Criterion) {
             for _ in 0..1000 {
                 let mut board = ArrayBoard::new_initial();
                 for action in &actions {
-                    board = board.apply_action(&action).unwrap();
+                    board = board.apply_action(action).unwrap();
                 }
             }
         })
