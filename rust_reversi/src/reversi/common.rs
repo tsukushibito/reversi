@@ -25,6 +25,16 @@ pub enum PlayerColor {
     White,
 }
 
+impl PlayerColor {
+    pub fn opponent(&self) -> PlayerColor {
+        if *self == PlayerColor::Black {
+            PlayerColor::White
+        } else {
+            PlayerColor::Black
+        }
+    }
+}
+
 /// 位置
 /// (行, 列)のタプル
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]

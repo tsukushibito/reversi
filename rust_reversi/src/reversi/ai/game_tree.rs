@@ -2,6 +2,7 @@ use crate::board::Board;
 use crate::Action;
 use crate::ActionType;
 use crate::PlayerColor;
+use crate::Position;
 
 #[derive(Debug)]
 pub enum SearchType {
@@ -10,7 +11,7 @@ pub enum SearchType {
 }
 
 #[derive(Debug)]
-pub struct GameTreeNode<T> {
+struct GameTreeNode<T> {
     board: T,
     player_color: PlayerColor,
     value: i32,
@@ -50,6 +51,22 @@ where
         }
     }
 
+    fn is_leaf(&self, depth: usize) -> bool {
+        depth == 0 || self.board.is_game_over()
+    }
+
+    fn expand(&mut self, actions: &Vec<Action>) {
+        // 展開
+        for act in actions {
+            let next = self.board.apply_action(&act);
+            self.children.push(GameTreeNode::new(
+                &next.unwrap(),
+                &self.player_color.opponent(),
+                None,
+            ));
+        }
+    }
+
     /// NegaAlpha法で評価
     /// evaluator: 評価関数
     /// depth: 読みの深さ
@@ -67,18 +84,11 @@ where
     where
         E: Fn(&T, &PlayerColor) -> i32,
     {
+        self.children.clear();
         *searched_nodes += 1;
-        if depth == 0 || self.board.is_game_over() {
-            // リーフノードなので評価
+        if self.is_leaf(depth) {
             self.value = evaluator(&self.board, &self.player_color);
         } else {
-            // ノードの処理
-            let opponent = if self.player_color == PlayerColor::Black {
-                PlayerColor::White
-            } else {
-                PlayerColor::Black
-            };
-
             let positions = self.board.get_movable_positions(&self.player_color);
             if positions.len() > 0 {
                 let actions = positions
@@ -86,12 +96,7 @@ where
                     .map(|p| Action::new(self.player_color, ActionType::Move(*p)))
                     .collect::<Vec<_>>();
 
-                // 展開
-                for act in &actions {
-                    let next = self.board.apply_action(&act);
-                    self.children
-                        .push(GameTreeNode::new(&next.unwrap(), &opponent, None));
-                }
+                self.expand(&actions);
 
                 // NegaAlphaで評価
                 let mut alpha = alpha;
@@ -108,26 +113,31 @@ where
                         index = i;
                     }
                 }
+
                 self.value = alpha;
                 self.action = Some(actions[index]);
             } else {
                 // パス時
-                // ボードをコピーして展開
-                self.children
-                    .push(GameTreeNode::new(&self.board.duplicate(), &opponent, None));
+                let actions = vec![Action::new(self.player_color, ActionType::Pass)];
+                self.expand(&actions);
 
                 // 評価
                 self.value = -(self.children[0]
                     .nega_alpha(evaluator, depth - 1, -beta, -alpha, searched_nodes)
                     .0);
 
-                // 手はパス
-                self.action = Some(Action::new(self.player_color, ActionType::Pass));
+                self.action = Some(actions[0]);
             }
         }
         (self.value, self.action)
     }
 
+    /// NegaMax方による探索
+    /// evaluator: 評価関数
+    /// depth: 読みの深さ
+    /// alpha: α値
+    /// beta: ベータ値
+    /// return: (評価値, 次の手)
     fn nega_max<E>(
         &mut self,
         evaluator: &E,
@@ -138,17 +148,9 @@ where
         E: Fn(&T, &PlayerColor) -> i32,
     {
         *searched_nodes += 1;
-        if depth == 0 || self.board.is_game_over() {
-            // リーフノードなので評価
+        if self.is_leaf(depth) {
             self.value = evaluator(&self.board, &self.player_color);
         } else {
-            // ノードの処理
-            let opponent = if self.player_color == PlayerColor::Black {
-                PlayerColor::White
-            } else {
-                PlayerColor::Black
-            };
-
             let positions = self.board.get_movable_positions(&self.player_color);
             if positions.len() > 0 {
                 let actions = positions
@@ -156,12 +158,7 @@ where
                     .map(|p| Action::new(self.player_color, ActionType::Move(*p)))
                     .collect::<Vec<_>>();
 
-                // 展開
-                for act in &actions {
-                    let next = self.board.apply_action(&act);
-                    self.children
-                        .push(GameTreeNode::new(&next.unwrap(), &opponent, None));
-                }
+                self.expand(&actions);
 
                 let mut value = i32::MIN + 1;
                 let mut index = 0;
@@ -172,21 +169,20 @@ where
                         index = i;
                     }
                 }
+
                 self.value = value;
                 self.action = Some(actions[index]);
             } else {
                 // パス時
-                // ボードをコピーして展開
-                self.children
-                    .push(GameTreeNode::new(&self.board, &opponent, None));
+                let actions = vec![Action::new(self.player_color, ActionType::Pass)];
+                self.expand(&actions);
 
                 // 評価
                 self.value = -(self.children[0]
                     .nega_max(evaluator, depth - 1, searched_nodes)
                     .0);
 
-                // 手はパス
-                self.action = Some(Action::new(self.player_color, ActionType::Pass));
+                self.action = Some(actions[0]);
             }
         }
         (self.value, self.action)
