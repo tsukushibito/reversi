@@ -13,5 +13,11 @@
 		"rust-analyzer.inlayHints.parameterHints.enable": false,
 		"rust-analyzer.inlayHints.typeHints.enable": false,
 		"rust-analyzer.cargoRunner": null
+	},
+	"extensions": {
+		"recommendations": [
+			"vadimcn.vscode-lldb",
+			"rust-lang.rust-analyzer"
+		]
 	}
 }
