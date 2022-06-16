@@ -34,7 +34,13 @@ impl Player for AiPlayer {
             PlayerColor::White
         };
 
-        let result = search_game_tree(&board, &color, &simple_evaluate, &SearchType::NegaAlpha, 7);
+        let result = search_game_tree(
+            &board,
+            &color,
+            &simple_evaluate,
+            &SearchType::NegaAlpha,
+            self.search_depth,
+        );
 
         result
             .action
