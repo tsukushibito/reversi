@@ -19,6 +19,7 @@ pub trait Board {
     fn square_count(&self, color: Square) -> u32;
     fn black_count(&self) -> u32;
     fn white_count(&self) -> u32;
+    fn empty_count(&self) -> u32;
     fn squares(&self) -> &Squares;
     fn duplicate(&self) -> Self;
 }

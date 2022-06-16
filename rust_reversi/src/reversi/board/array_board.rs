@@ -165,6 +165,10 @@ impl Board for ArrayBoard {
         self.square_count(Square::White)
     }
 
+    fn empty_count(&self) -> u32 {
+        self.square_count(Square::Empty)
+    }
+
     fn squares(&self) -> &Squares {
         &self.squares
     }
