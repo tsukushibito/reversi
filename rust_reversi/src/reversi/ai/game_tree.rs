@@ -2,7 +2,6 @@ use crate::board::Board;
 use crate::Action;
 use crate::ActionType;
 use crate::PlayerColor;
-use crate::Position;
 
 #[derive(Debug)]
 pub enum SearchType {
