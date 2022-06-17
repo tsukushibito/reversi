@@ -1,10 +1,25 @@
 use crate::board::Board;
+use crate::Action;
+use crate::PlayerColor;
 use crate::Position;
 use crate::Square;
 use crate::Squares;
 use crate::BOARD_SIZE;
 
-const fn position_to_data(position: Position) -> u64 {
+fn data_to_positions(data: u64) -> Vec<Position> {
+    let mut positions: Vec<Position> = Default::default();
+    let bytes = data.to_le_bytes();
+    for (r, byte) in bytes.iter().enumerate() {
+        for c in 0..BOARD_SIZE {
+            if byte & (1 << c) != 0 {
+                positions.push(Position(r, c));
+            }
+        }
+    }
+    positions
+}
+
+fn position_to_data(position: Position) -> u64 {
     1 << (position.0 * BOARD_SIZE + position.1)
 }
 
@@ -84,12 +99,12 @@ where
 }
 
 fn movable_position(player: u64, opponent: u64) -> u64 {
-    fn dir_continuous_line(position: u64, opponent: u64, dir_mask: u64, shift_count: u32) -> u64 {
+    fn dir_continuous_line(data: u64, opponent: u64, dir_mask: u64, shift_count: u32) -> u64 {
         let mask = opponent & dir_mask;
-        let mut line1 = continuous_line::<LeftShift>(position, mask, shift_count);
-        line1 = LeftShift::shift(line1, shift_count);
-        let mut line2 = continuous_line::<RightShift>(position, mask, shift_count);
-        line2 = RightShift::shift(line2, shift_count);
+        let mut line1 = continuous_line::<LeftShift>(data, mask, shift_count);
+        line1 |= LeftShift::shift(line1, shift_count);
+        let mut line2 = continuous_line::<RightShift>(data, mask, shift_count);
+        line2 |= RightShift::shift(line2, shift_count);
         line1 | line2
     }
 
@@ -100,51 +115,98 @@ fn movable_position(player: u64, opponent: u64) -> u64 {
 
     (horizontal | vertical | diagonal_ltrb | diagonal_rtlb) & !(player | opponent)
 }
+
+fn flip_data(player: u64, opponent: u64, position: u64) -> u64 {
+    fn dir_flip(player: u64, opponent: u64, position: u64, dir_mask: u64, shift_count: u32) -> u64 {
+        let mut result: u64 = 0;
+        let mask = opponent & dir_mask;
+
+        let line1 = continuous_line::<LeftShift>(position, mask, shift_count);
+        let temp = player & LeftShift::shift(line1, shift_count);
+        if temp != 0 {
+            result |= line1;
+        }
+
+        let line2 = continuous_line::<RightShift>(position, mask, shift_count);
+        let temp = player & RightShift::shift(line2, shift_count);
+        if temp != 0 {
+            result |= line2;
+        }
+
+        result
+    }
+
+    let horizontal = dir_flip(player, opponent, position, HORIZONTAL_MASK, 1);
+    let vertical = dir_flip(player, opponent, position, VERTICAL_MASK, 8);
+    let diagonal_ltrb = dir_flip(player, opponent, position, DIAGONAL_MASK, 9);
+    let diagonal_rtlb = dir_flip(player, opponent, position, DIAGONAL_MASK, 7);
+
+    horizontal | vertical | diagonal_ltrb | diagonal_rtlb
+}
+
+fn flip(player: u64, opponent: u64, position: u64) -> (u64, u64) {
+    let flip_data = flip_data(player, opponent, position);
+    (player ^ position ^ flip_data, opponent ^ flip_data)
+}
+
 /// ボード
 #[derive(Clone, Debug)]
 pub struct BitBoard {
     black: u64,
     white: u64,
+    squares: Squares,
 }
 
 impl Board for BitBoard {
-    fn apply_action(&self, action: &crate::Action) -> Option<Self>
+    fn apply_action(&self, action: &Action) -> Option<Self>
     where
         Self: Sized,
     {
         todo!()
     }
 
-    fn get_movable_positions(&self, color: &crate::PlayerColor) -> Vec<crate::Position> {
-        todo!()
+    fn get_movable_positions(&self, color: &PlayerColor) -> Vec<Position> {
+        let (player, opponent) = if *color == PlayerColor::Black {
+            (self.black, self.white)
+        } else {
+            (self.white, self.black)
+        };
+
+        let movable = movable_position(player, opponent);
+        data_to_positions(movable)
     }
 
     fn is_game_over(&self) -> bool {
-        todo!()
+        self.get_movable_positions(&PlayerColor::Black).is_empty()
+            && self.get_movable_positions(&PlayerColor::White).is_empty()
     }
 
-    fn square_count(&self, color: crate::Square) -> u32 {
-        todo!()
+    fn square_count(&self, color: Square) -> u32 {
+        match color {
+            Square::Black => self.black_count(),
+            Square::White => self.white_count(),
+            Square::Empty => self.empty_count(),
+        }
     }
 
     fn black_count(&self) -> u32 {
-        todo!()
+        self.black.count_ones()
     }
 
     fn white_count(&self) -> u32 {
-        todo!()
+        self.white.count_ones()
     }
 
     fn empty_count(&self) -> u32 {
-        todo!()
+        (!self.black & !self.white).count_ones()
     }
 
     fn squares(&self) -> &Squares {
-        todo!()
+        &self.squares
     }
 
     fn duplicate(&self) -> Self {
-        todo!()
+        self.clone()
     }
 }
 

@@ -217,9 +217,8 @@ impl Board for IndexBoard {
     }
 
     fn is_game_over(&self) -> bool {
-        self.get_movable_positions(&PlayerColor::Black).len()
-            + self.get_movable_positions(&PlayerColor::White).len()
-            == 0
+        self.get_movable_positions(&PlayerColor::Black).is_empty()
+            && self.get_movable_positions(&PlayerColor::White).is_empty()
     }
 
     fn square_count(&self, color: Square) -> u32 {
