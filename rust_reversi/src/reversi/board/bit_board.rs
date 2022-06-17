@@ -1,5 +1,6 @@
 use crate::board::Board;
 use crate::Action;
+use crate::ActionType;
 use crate::PlayerColor;
 use crate::Position;
 use crate::Square;
@@ -157,12 +158,72 @@ pub struct BitBoard {
     squares: Squares,
 }
 
+impl BitBoard {
+    pub fn new(squares: Squares) -> Self {
+        let (black, white) = squares_to_data(&squares);
+        Self {
+            black,
+            white,
+            squares,
+        }
+    }
+
+    pub fn new_from_data(black: u64, white: u64) -> Self {
+        let squares = data_to_squares(black, white);
+        Self {
+            black,
+            white,
+            squares,
+        }
+    }
+
+    pub fn new_initial() -> Self {
+        let mut squares: Squares = [[Square::Empty; BOARD_SIZE]; BOARD_SIZE];
+        squares[3][4] = Square::Black;
+        squares[4][3] = Square::Black;
+        squares[3][3] = Square::White;
+        squares[4][4] = Square::White;
+
+        Self::new(squares)
+    }
+}
+
 impl Board for BitBoard {
     fn apply_action(&self, action: &Action) -> Option<Self>
     where
         Self: Sized,
     {
-        todo!()
+        match action.action {
+            ActionType::Pass => {
+                if self.get_movable_positions(&action.color).is_empty() {
+                    Some(self.clone())
+                } else {
+                    None
+                }
+            }
+            ActionType::Move(position) => {
+                let (player, opponent) = if action.color == PlayerColor::Black {
+                    (self.black, self.white)
+                } else {
+                    (self.white, self.black)
+                };
+
+                let movable = movable_position(player, opponent);
+                let pos = position_to_data(position);
+
+                if pos & movable == 0 {
+                    return None;
+                }
+
+                let (next_player, next_opponent) = flip(player, opponent, pos);
+                let (next_black, next_white) = if action.color == PlayerColor::Black {
+                    (next_player, next_opponent)
+                } else {
+                    (next_opponent, next_player)
+                };
+                Some(BitBoard::new_from_data(next_black, next_white))
+            }
+        }
     }
 
     fn get_movable_positions(&self, color: &PlayerColor) -> Vec<Position> {
@@ -266,5 +327,35 @@ mod tests {
                 assert!(temp[r][c] == Square::Empty);
             }
         }
+    }
+
+    #[test]
+    fn test_apply_action() {
+        let board = BitBoard::new_initial();
+
+        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(0, 0)));
+        let r = board.apply_action(&act);
+        assert!(r.is_none());
+
+        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
+        let r = board.apply_action(&act);
+        assert!(r.is_some());
+        let next_board = r.unwrap();
+        assert!(next_board.squares[2][3] == Square::Black);
+        assert!(next_board.squares[3][3] == Square::Black);
+        assert!(next_board.squares[4][3] == Square::Black);
+        assert!(next_board.squares[3][4] == Square::Black);
+        assert!(next_board.squares[4][4] == Square::White);
+
+        let act = Action::new(PlayerColor::White, ActionType::Move(Position(2, 2)));
+        let r = next_board.apply_action(&act);
+        assert!(r.is_some());
+        let next_board = r.unwrap();
+        assert!(next_board.squares[2][3] == Square::Black);
+        assert!(next_board.squares[4][3] == Square::Black);
+        assert!(next_board.squares[3][4] == Square::Black);
+        assert!(next_board.squares[2][2] == Square::White);
+        assert!(next_board.squares[3][3] == Square::White);
+        assert!(next_board.squares[4][4] == Square::White);
     }
 }

@@ -1,5 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use reversi::board::ArrayBoard;
+use reversi::board::BitBoard;
 use reversi::board::Board;
 use reversi::board::IndexBoard;
 use reversi::board::Indexer;
@@ -53,5 +54,19 @@ fn array_board(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, index_board, array_board);
+fn bit_board(c: &mut Criterion) {
+    c.bench_function("Bit Board", |b| {
+        b.iter(|| {
+            let actions = action_table();
+            for _ in 0..1000 {
+                let mut board = BitBoard::new_initial();
+                for action in &actions {
+                    board = board.apply_action(action).unwrap();
+                }
+            }
+        })
+    });
+}
+
+criterion_group!(benches, index_board, array_board, bit_board);
 criterion_main!(benches);
