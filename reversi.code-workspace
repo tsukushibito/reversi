@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "./experimental"
+		},
+		{
+			"path": "./gui"
 		}
 	],
 	"settings": {
