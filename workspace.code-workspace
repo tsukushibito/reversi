@@ -1,11 +1,8 @@
 {
 	"folders": [
 		{
-			"path": "./rust_reversi"
+			"path": "."
 		},
-		{
-			"path": "./experimental"
-		}
 	],
 	"settings": {
 		"rust-analyzer.checkOnSave.command": "clippy",
