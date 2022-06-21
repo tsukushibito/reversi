@@ -319,6 +319,8 @@ mod tests {
         assert!(temp[3][2] == Square::Black);
         assert!(temp[4][5] == Square::Black);
         assert!(temp[5][4] == Square::Black);
+
+        #[allow(clippy::needless_range_loop)]
         for r in 0..BOARD_SIZE {
             for c in 0..BOARD_SIZE {
                 if r == 2 && c == 3 || r == 3 && c == 2 || r == 4 && c == 5 || r == 5 && c == 4 {
