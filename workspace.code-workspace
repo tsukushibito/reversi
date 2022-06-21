@@ -13,6 +13,7 @@
 	},
 	"extensions": {
 		"recommendations": [
+			"ms-azuretools.vscode-docker",
 			"vadimcn.vscode-lldb",
 			"rust-lang.rust-analyzer"
 		]
