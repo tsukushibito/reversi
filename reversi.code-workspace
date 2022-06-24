@@ -1,14 +1,8 @@
 {
 	"folders": [
 		{
-			"path": "./rust_reversi"
+			"path": "."
 		},
-		{
-			"path": "./experimental"
-		},
-		{
-			"path": "./gui"
-		}
 	],
 	"settings": {
 		"rust-analyzer.checkOnSave.command": "clippy",
@@ -19,6 +13,7 @@
 	},
 	"extensions": {
 		"recommendations": [
+			"ms-azuretools.vscode-docker",
 			"vadimcn.vscode-lldb",
 			"rust-lang.rust-analyzer"
 		]
