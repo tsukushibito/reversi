@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  rust-dev:
+    image: rust:latest
+    container_name: rust_dev
+    working_dir: /work
+    volumes:
+      - ./:/work:cached
+      - dev_target:/work/target
+    tty: true
+    environment:
+      USER: vscode # cargo で必要になる
+      CARGO_BUILD_TARGET_DIR: /app/target
+        
+volumes:
+  dev_target:
