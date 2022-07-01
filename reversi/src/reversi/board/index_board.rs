@@ -8,6 +8,8 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct IndexBoard {
     squares: Squares,
+    depth: u32,
+    last_action: Option<Action>,
     indexer: Rc<Indexer>,
 }
 
@@ -20,11 +22,21 @@ impl IndexBoard {
         squares[3][3] = Square::White;
         squares[4][4] = Square::White;
 
-        IndexBoard::new(squares, indexer)
+        IndexBoard::new(squares, 0, None, indexer)
     }
 
-    pub fn new(squares: Squares, indexer: Rc<Indexer>) -> IndexBoard {
-        IndexBoard { squares, indexer }
+    pub fn new(
+        squares: Squares,
+        depth: u32,
+        last_action: Option<Action>,
+        indexer: Rc<Indexer>,
+    ) -> IndexBoard {
+        IndexBoard {
+            squares,
+            depth,
+            last_action,
+            indexer,
+        }
     }
 
     fn get_flip_infos(
@@ -116,7 +128,12 @@ impl Board for IndexBoard {
             ActionType::Pass => {
                 // パスできるかチェック
                 if self.can_pass(&action.color) {
-                    Some(self.clone())
+                    Some(IndexBoard::new(
+                        self.squares,
+                        self.depth + 1,
+                        Some(*action),
+                        self.indexer.clone(),
+                    ))
                 } else {
                     None
                 }
@@ -196,7 +213,12 @@ impl Board for IndexBoard {
                     squares[r][c] = square_color;
                 }
 
-                Some(IndexBoard::new(squares, self.indexer.clone()))
+                Some(IndexBoard::new(
+                    squares,
+                    self.depth + 1,
+                    Some(*action),
+                    self.indexer.clone(),
+                ))
             }
         }
     }
@@ -216,11 +238,6 @@ impl Board for IndexBoard {
         positions
     }
 
-    fn is_game_over(&self) -> bool {
-        self.get_movable_positions(&PlayerColor::Black).is_empty()
-            && self.get_movable_positions(&PlayerColor::White).is_empty()
-    }
-
     fn square_count(&self, color: Square) -> u32 {
         let mut count = 0;
         for row in &self.squares {
@@ -233,23 +250,20 @@ impl Board for IndexBoard {
         count
     }
 
-    fn black_count(&self) -> u32 {
-        self.square_count(Square::Black)
-    }
-
-    fn white_count(&self) -> u32 {
-        self.square_count(Square::White)
-    }
-
-    fn empty_count(&self) -> u32 {
-        self.square_count(Square::Empty)
-    }
-
     fn squares(&self) -> &Squares {
         &self.squares
     }
+
     fn duplicate(&self) -> IndexBoard {
         self.clone()
+    }
+
+    fn depth(&self) -> u32 {
+        self.depth
+    }
+
+    fn last_action(&self) -> Option<Action> {
+        self.last_action
     }
 }
 

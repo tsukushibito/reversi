@@ -1,6 +1,11 @@
 use crate::board::Board;
 use crate::player::Player;
+use crate::GameStateDto;
 use std::rc::Rc;
+
+pub enum GameEvent {
+    Started(GameStateDto),
+}
 
 pub struct Game<T, U, V>
 where
@@ -34,11 +39,9 @@ where
     pub fn run(&mut self) {
         loop {
             let action = if self.depth % 2 == 0 {
-                self.black_player
-                    .take_action(self.depth, self.board.squares())
+                self.black_player.take_action(&self.board.game_state_dto())
             } else {
-                self.white_player
-                    .take_action(self.depth, self.board.squares())
+                self.white_player.take_action(&self.board.game_state_dto())
             };
 
             if let Some(next_board) = self.board.apply_action(&action) {
@@ -62,9 +65,7 @@ mod tests {
     use crate::board::Indexer;
     use crate::Action;
     use crate::ActionType;
-    use crate::PlayerColor;
     use crate::Position;
-    use crate::Squares;
     use std::rc::Rc;
 
     struct Test1Player {
@@ -81,14 +82,14 @@ mod tests {
     }
 
     impl Player for Test1Player {
-        fn take_action(&mut self, depth: u32, squares: &Squares) -> Action {
-            let color = if depth % 2 == 0 {
-                PlayerColor::Black
-            } else {
-                PlayerColor::White
-            };
-
-            let board = IndexBoard::new(*squares, self.indexer.clone());
+        fn take_action(&mut self, state: &GameStateDto) -> Action {
+            let color = state.turn;
+            let board = IndexBoard::new(
+                state.board,
+                state.depth,
+                state.last_action,
+                self.indexer.clone(),
+            );
             let positions = board.get_movable_positions(&color);
 
             if positions.is_empty() {
@@ -109,13 +110,9 @@ mod tests {
     }
 
     impl Player for Test2Player {
-        fn take_action(&mut self, depth: u32, _: &Squares) -> Action {
-            let color = if depth % 2 == 0 {
-                PlayerColor::Black
-            } else {
-                PlayerColor::White
-            };
-            match depth {
+        fn take_action(&mut self, state: &GameStateDto) -> Action {
+            let color = state.turn;
+            match state.depth {
                 0 => Action::new(color, ActionType::Move(Position(4, 5))),
                 1 => Action::new(color, ActionType::Move(Position(5, 5))),
                 2 => Action::new(color, ActionType::Move(Position(5, 4))),

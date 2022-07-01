@@ -11,15 +11,51 @@ pub use index_board::IndexBoard;
 pub use indexer::Indexer;
 
 pub trait Board {
+    fn squares(&self) -> &Squares;
+    fn depth(&self) -> u32;
+    fn last_action(&self) -> Option<Action>;
+    fn square_count(&self, color: Square) -> u32;
+    fn duplicate(&self) -> Self;
+
     fn apply_action(&self, action: &Action) -> Option<Self>
     where
         Self: Sized;
     fn get_movable_positions(&self, color: &PlayerColor) -> Vec<Position>;
-    fn is_game_over(&self) -> bool;
-    fn square_count(&self, color: Square) -> u32;
-    fn black_count(&self) -> u32;
-    fn white_count(&self) -> u32;
-    fn empty_count(&self) -> u32;
-    fn squares(&self) -> &Squares;
-    fn duplicate(&self) -> Self;
+
+    fn is_game_over(&self) -> bool {
+        self.get_movable_positions(&PlayerColor::Black).is_empty()
+            && self.get_movable_positions(&PlayerColor::White).is_empty()
+    }
+
+    fn black_count(&self) -> u32 {
+        self.square_count(Square::Black)
+    }
+
+    fn white_count(&self) -> u32 {
+        self.square_count(Square::White)
+    }
+
+    fn empty_count(&self) -> u32 {
+        self.square_count(Square::Empty)
+    }
+
+    fn turn(&self) -> PlayerColor {
+        if self.depth() % 2 == 0 {
+            PlayerColor::Black
+        } else {
+            PlayerColor::White
+        }
+    }
+
+    fn game_state_dto(&self) -> GameStateDto {
+        GameStateDto {
+            board: *self.squares(),
+            depth: self.depth(),
+            black_count: self.black_count(),
+            white_count: self.white_count(),
+            is_end: self.is_game_over(),
+            turn: self.turn(),
+            last_action: self.last_action(),
+        }
+    }
 }

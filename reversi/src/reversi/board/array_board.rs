@@ -22,6 +22,8 @@ const DIRECTIONS: [(i32, i32); BOARD_SIZE] = [
 #[derive(Clone, Debug)]
 pub struct ArrayBoard {
     squares: Squares,
+    depth: u32,
+    last_action: Option<Action>,
 }
 
 impl ArrayBoard {
@@ -33,11 +35,15 @@ impl ArrayBoard {
         squares[3][3] = Square::White;
         squares[4][4] = Square::White;
 
-        ArrayBoard::new(squares)
+        ArrayBoard::new(squares, 0, None)
     }
 
-    pub fn new(squares: Squares) -> ArrayBoard {
-        ArrayBoard { squares }
+    pub fn new(squares: Squares, depth: u32, last_action: Option<Action>) -> ArrayBoard {
+        ArrayBoard {
+            squares,
+            depth,
+            last_action,
+        }
     }
 
     fn get_flip_count(&self, color: &PlayerColor, pos: &(usize, usize), dir: &(i32, i32)) -> i32 {
@@ -77,7 +83,7 @@ impl Board for ArrayBoard {
                 // パスできるかチェック
                 let movables = self.get_movable_positions(&action.color);
                 if movables.is_empty() {
-                    Some(self.clone())
+                    Some(ArrayBoard::new(self.squares, self.depth + 1, Some(*action)))
                 } else {
                     None
                 }
@@ -112,7 +118,7 @@ impl Board for ArrayBoard {
                         }
                     }
 
-                    Some(ArrayBoard::new(squares))
+                    Some(ArrayBoard::new(squares, self.depth + 1, Some(*action)))
                 } else {
                     None
                 }
@@ -139,12 +145,6 @@ impl Board for ArrayBoard {
         positions
     }
 
-    fn is_game_over(&self) -> bool {
-        self.get_movable_positions(&PlayerColor::Black).len()
-            + self.get_movable_positions(&PlayerColor::White).len()
-            == 0
-    }
-
     fn square_count(&self, color: Square) -> u32 {
         let mut count = 0;
         for row in &self.squares {
@@ -157,23 +157,20 @@ impl Board for ArrayBoard {
         count
     }
 
-    fn black_count(&self) -> u32 {
-        self.square_count(Square::Black)
-    }
-
-    fn white_count(&self) -> u32 {
-        self.square_count(Square::White)
-    }
-
-    fn empty_count(&self) -> u32 {
-        self.square_count(Square::Empty)
-    }
-
     fn squares(&self) -> &Squares {
         &self.squares
     }
+
     fn duplicate(&self) -> ArrayBoard {
         self.clone()
+    }
+
+    fn depth(&self) -> u32 {
+        self.depth
+    }
+
+    fn last_action(&self) -> Option<Action> {
+        self.last_action
     }
 }
 

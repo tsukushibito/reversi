@@ -5,8 +5,7 @@ use crate::board::BitBoard;
 use crate::player::Player;
 use crate::Action;
 use crate::ActionType;
-use crate::PlayerColor;
-use crate::Squares;
+use crate::GameStateDto;
 
 pub struct AiPlayer {
     search_depth: usize,
@@ -19,14 +18,9 @@ impl AiPlayer {
 }
 
 impl Player for AiPlayer {
-    fn take_action(&mut self, depth: u32, squares: &Squares) -> Action {
-        let board = BitBoard::new(*squares);
-        let color = if depth % 2 == 0 {
-            PlayerColor::Black
-        } else {
-            PlayerColor::White
-        };
-
+    fn take_action(&mut self, state: &GameStateDto) -> Action {
+        let board = BitBoard::new(state.board, state.depth, state.last_action);
+        let color = state.turn;
         let result = search_game_tree(
             &board,
             &color,

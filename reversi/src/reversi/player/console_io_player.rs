@@ -16,11 +16,11 @@ impl Default for ConsoleIoPlayer {
 }
 
 impl Player for ConsoleIoPlayer {
-    fn take_action(&mut self, depth: u32, squares: &Squares) -> Action {
-        println!("[{}]", depth);
+    fn take_action(&mut self, state: &GameStateDto) -> Action {
+        println!("[{}]", state.depth);
         println!("   a b c d e f g h");
         println!("   ----------------");
-        for (i, row) in squares.iter().enumerate() {
+        for (i, row) in state.board.iter().enumerate() {
             let mut r = (i + 1).to_string() + "|";
             for square in row {
                 r += match square {
@@ -33,11 +33,7 @@ impl Player for ConsoleIoPlayer {
         }
         println!("Please input move position.");
 
-        let color = if depth % 2 == 0 {
-            PlayerColor::Black
-        } else {
-            PlayerColor::White
-        };
+        let color = state.turn;
 
         loop {
             let mut input = String::new();

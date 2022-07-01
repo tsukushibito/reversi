@@ -156,24 +156,31 @@ pub struct BitBoard {
     black: u64,
     white: u64,
     squares: Squares,
+    depth: u32,
+    last_action: Option<Action>,
 }
 
 impl BitBoard {
-    pub fn new(squares: Squares) -> Self {
+    /// Creates a new [`BitBoard`].
+    pub fn new(squares: Squares, depth: u32, last_action: Option<Action>) -> Self {
         let (black, white) = squares_to_data(&squares);
         Self {
             black,
             white,
             squares,
+            depth,
+            last_action,
         }
     }
 
-    pub fn new_from_data(black: u64, white: u64) -> Self {
+    pub fn new_from_data(black: u64, white: u64, depth: u32, last_action: Option<Action>) -> Self {
         let squares = data_to_squares(black, white);
         Self {
             black,
             white,
             squares,
+            depth,
+            last_action,
         }
     }
 
@@ -184,7 +191,7 @@ impl BitBoard {
         squares[3][3] = Square::White;
         squares[4][4] = Square::White;
 
-        Self::new(squares)
+        Self::new(squares, 0, None)
     }
 }
 
@@ -196,7 +203,12 @@ impl Board for BitBoard {
         match action.action {
             ActionType::Pass => {
                 if self.get_movable_positions(&action.color).is_empty() {
-                    Some(self.clone())
+                    Some(BitBoard::new_from_data(
+                        self.black,
+                        self.white,
+                        self.depth + 1,
+                        Some(*action),
+                    ))
                 } else {
                     None
                 }
@@ -221,7 +233,12 @@ impl Board for BitBoard {
                 } else {
                     (next_opponent, next_player)
                 };
-                Some(BitBoard::new_from_data(next_black, next_white))
+                Some(BitBoard::new_from_data(
+                    next_black,
+                    next_white,
+                    self.depth + 1,
+                    Some(*action),
+                ))
             }
         }
     }
@@ -237,11 +254,6 @@ impl Board for BitBoard {
         data_to_positions(movable)
     }
 
-    fn is_game_over(&self) -> bool {
-        self.get_movable_positions(&PlayerColor::Black).is_empty()
-            && self.get_movable_positions(&PlayerColor::White).is_empty()
-    }
-
     fn square_count(&self, color: Square) -> u32 {
         match color {
             Square::Black => self.black_count(),
@@ -250,24 +262,20 @@ impl Board for BitBoard {
         }
     }
 
-    fn black_count(&self) -> u32 {
-        self.black.count_ones()
-    }
-
-    fn white_count(&self) -> u32 {
-        self.white.count_ones()
-    }
-
-    fn empty_count(&self) -> u32 {
-        (!self.black & !self.white).count_ones()
-    }
-
     fn squares(&self) -> &Squares {
         &self.squares
     }
 
     fn duplicate(&self) -> Self {
         self.clone()
+    }
+
+    fn depth(&self) -> u32 {
+        self.depth
+    }
+
+    fn last_action(&self) -> Option<Action> {
+        self.last_action
     }
 }
 
