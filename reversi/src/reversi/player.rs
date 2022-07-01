@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{game::GameEventParameter, Action};
 
 mod ai_player;
 mod console_io_player;
@@ -9,5 +9,5 @@ pub use console_io_player::ConsoleIoPlayer;
 pub use gui_player::GuiPlayer;
 
 pub trait Player {
-    fn take_action(&mut self, state: &GameStateDto) -> Action;
+    fn take_action(&mut self, state: &GameEventParameter) -> Action;
 }

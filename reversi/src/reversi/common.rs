@@ -57,14 +57,3 @@ impl Action {
         Action { color, action }
     }
 }
-
-/// ゲーム状態通知用オブジェクト
-pub struct GameStateDto {
-    pub board: Squares,
-    pub depth: u32,
-    pub black_count: u32,
-    pub white_count: u32,
-    pub is_end: bool,
-    pub turn: PlayerColor,
-    pub last_action: Option<Action>,
-}

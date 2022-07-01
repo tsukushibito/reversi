@@ -1,3 +1,4 @@
+use crate::game::GameEventParameter;
 use crate::player::Player;
 use crate::reversi::common::*;
 
@@ -16,7 +17,7 @@ impl Default for ConsoleIoPlayer {
 }
 
 impl Player for ConsoleIoPlayer {
-    fn take_action(&mut self, state: &GameStateDto) -> Action {
+    fn take_action(&mut self, state: &GameEventParameter) -> Action {
         println!("[{}]", state.depth);
         println!("   a b c d e f g h");
         println!("   ----------------");

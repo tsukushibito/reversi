@@ -1,6 +1,6 @@
 use crate::board::Board;
 use crate::player::Player;
-use crate::{GameStateDto, PlayerColor};
+use crate::{Action, PlayerColor, Squares};
 use std::rc::Rc;
 
 pub enum GameEvent {
@@ -8,6 +8,33 @@ pub enum GameEvent {
     TurnStarted,
     TurnEnded,
     GameOver,
+}
+
+pub struct GameEventParameter {
+    pub board: Squares,
+    pub depth: u32,
+    pub black_count: u32,
+    pub white_count: u32,
+    pub is_end: bool,
+    pub turn: PlayerColor,
+    pub last_action: Option<Action>,
+}
+
+impl GameEventParameter {
+    pub fn new<T>(board: &T) -> Self
+    where
+        T: Board,
+    {
+        Self {
+            board: *board.squares(),
+            depth: board.depth(),
+            black_count: board.black_count(),
+            white_count: board.white_count(),
+            is_end: board.is_game_over(),
+            turn: board.turn(),
+            last_action: board.last_action(),
+        }
+    }
 }
 
 pub struct Game<T, U, V>
@@ -20,7 +47,7 @@ where
     black_player: T,
     white_player: U,
     board_history: Vec<Rc<V>>,
-    event_handler: Option<fn(GameEvent, &GameStateDto)>,
+    event_handler: Option<fn(GameEvent, &GameEventParameter)>,
 }
 
 impl<T, U, V> Game<T, U, V>
@@ -33,7 +60,7 @@ where
         initial_board: Rc<V>,
         black_player: T,
         white_player: U,
-        event_handler: Option<fn(GameEvent, &GameStateDto)>,
+        event_handler: Option<fn(GameEvent, &GameEventParameter)>,
     ) -> Game<T, U, V> {
         Game {
             board: initial_board,
@@ -46,22 +73,30 @@ where
 
     pub fn run(&mut self) {
         if let Some(event_handler) = self.event_handler {
-            event_handler(GameEvent::Started, &self.board.game_state_dto());
+            event_handler(GameEvent::Started, &GameEventParameter::new(&(*self.board)));
         }
 
         loop {
             if let Some(event_handler) = self.event_handler {
-                event_handler(GameEvent::TurnStarted, &self.board.game_state_dto());
+                event_handler(
+                    GameEvent::TurnStarted,
+                    &GameEventParameter::new(&(*self.board)),
+                );
             }
 
             let action = if self.board.turn() == PlayerColor::Black {
-                self.black_player.take_action(&self.board.game_state_dto())
+                self.black_player
+                    .take_action(&GameEventParameter::new(&(*self.board)))
             } else {
-                self.white_player.take_action(&self.board.game_state_dto())
+                self.white_player
+                    .take_action(&GameEventParameter::new(&(*self.board)))
             };
 
             if let Some(event_handler) = self.event_handler {
-                event_handler(GameEvent::TurnEnded, &self.board.game_state_dto());
+                event_handler(
+                    GameEvent::TurnEnded,
+                    &GameEventParameter::new(&(*self.board)),
+                );
             }
 
             if let Some(next_board) = self.board.apply_action(&action) {
@@ -75,7 +110,10 @@ where
         }
 
         if let Some(event_handler) = self.event_handler {
-            event_handler(GameEvent::GameOver, &self.board.game_state_dto());
+            event_handler(
+                GameEvent::GameOver,
+                &GameEventParameter::new(&(*self.board)),
+            );
         }
     }
 }
@@ -105,7 +143,7 @@ mod tests {
     }
 
     impl Player for Test1Player {
-        fn take_action(&mut self, state: &GameStateDto) -> Action {
+        fn take_action(&mut self, state: &GameEventParameter) -> Action {
             let color = state.turn;
             let board = IndexBoard::new(
                 state.board,
@@ -133,7 +171,7 @@ mod tests {
     }
 
     impl Player for Test2Player {
-        fn take_action(&mut self, state: &GameStateDto) -> Action {
+        fn take_action(&mut self, state: &GameEventParameter) -> Action {
             let color = state.turn;
             match state.depth {
                 0 => Action::new(color, ActionType::Move(Position(4, 5))),

@@ -46,16 +46,4 @@ pub trait Board {
             PlayerColor::White
         }
     }
-
-    fn game_state_dto(&self) -> GameStateDto {
-        GameStateDto {
-            board: *self.squares(),
-            depth: self.depth(),
-            black_count: self.black_count(),
-            white_count: self.white_count(),
-            is_end: self.is_game_over(),
-            turn: self.turn(),
-            last_action: self.last_action(),
-        }
-    }
 }
