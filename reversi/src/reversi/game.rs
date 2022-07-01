@@ -1,10 +1,13 @@
 use crate::board::Board;
 use crate::player::Player;
-use crate::GameStateDto;
+use crate::{GameStateDto, PlayerColor};
 use std::rc::Rc;
 
 pub enum GameEvent {
-    Started(GameStateDto),
+    Started,
+    TurnStarted,
+    TurnEnded,
+    GameOver,
 }
 
 pub struct Game<T, U, V>
@@ -16,8 +19,8 @@ where
     board: Rc<V>,
     black_player: T,
     white_player: U,
-    depth: u32,
     board_history: Vec<Rc<V>>,
+    event_handler: Option<fn(GameEvent, &GameStateDto)>,
 }
 
 impl<T, U, V> Game<T, U, V>
@@ -26,26 +29,42 @@ where
     U: Player,
     V: Board,
 {
-    pub fn new(initial_board: Rc<V>, black_player: T, white_player: U) -> Game<T, U, V> {
+    pub fn new(
+        initial_board: Rc<V>,
+        black_player: T,
+        white_player: U,
+        event_handler: Option<fn(GameEvent, &GameStateDto)>,
+    ) -> Game<T, U, V> {
         Game {
             board: initial_board,
             black_player,
             white_player,
-            depth: 0,
             board_history: Default::default(),
+            event_handler,
         }
     }
 
     pub fn run(&mut self) {
+        if let Some(event_handler) = self.event_handler {
+            event_handler(GameEvent::Started, &self.board.game_state_dto());
+        }
+
         loop {
-            let action = if self.depth % 2 == 0 {
+            if let Some(event_handler) = self.event_handler {
+                event_handler(GameEvent::TurnStarted, &self.board.game_state_dto());
+            }
+
+            let action = if self.board.turn() == PlayerColor::Black {
                 self.black_player.take_action(&self.board.game_state_dto())
             } else {
                 self.white_player.take_action(&self.board.game_state_dto())
             };
 
+            if let Some(event_handler) = self.event_handler {
+                event_handler(GameEvent::TurnEnded, &self.board.game_state_dto());
+            }
+
             if let Some(next_board) = self.board.apply_action(&action) {
-                self.depth += 1;
                 self.board_history.push(self.board.clone());
                 self.board = Rc::new(next_board);
 
@@ -53,6 +72,10 @@ where
                     break;
                 }
             }
+        }
+
+        if let Some(event_handler) = self.event_handler {
+            event_handler(GameEvent::GameOver, &self.board.game_state_dto());
         }
     }
 }
@@ -135,10 +158,10 @@ mod tests {
             let board = Rc::new(IndexBoard::new_initial(indexer));
             let black = Test1Player::new();
             let white = Test1Player::new();
-            let mut reversi = Game::new(board, black, white);
+            let mut reversi = Game::new(board, black, white, None);
             reversi.run();
 
-            assert_eq!(64, reversi.depth);
+            assert_eq!(64, reversi.board.depth());
             assert_eq!(19, reversi.board.black_count());
             assert_eq!(45, reversi.board.white_count());
         }
@@ -148,10 +171,10 @@ mod tests {
             let board = Rc::new(IndexBoard::new_initial(indexer));
             let black = Test2Player::new();
             let white = Test2Player::new();
-            let mut reversi = Game::new(board, black, white);
+            let mut reversi = Game::new(board, black, white, None);
             reversi.run();
 
-            assert_eq!(10, reversi.depth);
+            assert_eq!(10, reversi.board.depth());
             assert_eq!(0, reversi.board.black_count());
             assert_eq!(14, reversi.board.white_count());
         }
@@ -163,10 +186,10 @@ mod tests {
             let board = Rc::new(ArrayBoard::new_initial());
             let black = Test1Player::new();
             let white = Test1Player::new();
-            let mut reversi = Game::new(board, black, white);
+            let mut reversi = Game::new(board, black, white, None);
             reversi.run();
 
-            assert_eq!(64, reversi.depth);
+            assert_eq!(64, reversi.board.depth());
             assert_eq!(19, reversi.board.black_count());
             assert_eq!(45, reversi.board.white_count());
         }
@@ -175,10 +198,10 @@ mod tests {
             let board = Rc::new(ArrayBoard::new_initial());
             let black = Test2Player::new();
             let white = Test2Player::new();
-            let mut reversi = Game::new(board, black, white);
+            let mut reversi = Game::new(board, black, white, None);
             reversi.run();
 
-            assert_eq!(10, reversi.depth);
+            assert_eq!(10, reversi.board.depth());
             assert_eq!(0, reversi.board.black_count());
             assert_eq!(14, reversi.board.white_count());
         }

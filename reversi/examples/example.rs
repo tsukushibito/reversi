@@ -10,6 +10,6 @@ fn main() {
     let board = Rc::new(IndexBoard::new_initial(indexer));
     let black_player = ConsoleIoPlayer::new();
     let white_player = AiPlayer::new(7);
-    let mut reversi = Game::new(board, black_player, white_player);
+    let mut reversi = Game::new(board, black_player, white_player, None);
     reversi.run();
 }
