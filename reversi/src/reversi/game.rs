@@ -37,31 +37,31 @@ impl GameEventParameter {
     }
 }
 
-pub struct Game<T, U, V>
-where
-    T: Player,
-    U: Player,
-    V: Board,
-{
-    board: Rc<V>,
-    black_player: T,
-    white_player: U,
-    board_history: Vec<Rc<V>>,
-    event_handler: Option<fn(GameEvent, &GameEventParameter)>,
+pub trait GameEventHandler {
+    fn handle(&self, event: GameEvent, param: &GameEventParameter);
 }
 
-impl<T, U, V> Game<T, U, V>
+pub struct Game<T>
 where
-    T: Player,
-    U: Player,
-    V: Board,
+    T: Board,
+{
+    board: Rc<T>,
+    black_player: Box<dyn Player>,
+    white_player: Box<dyn Player>,
+    board_history: Vec<Rc<T>>,
+    event_handler: Option<Box<dyn GameEventHandler>>,
+}
+
+impl<T> Game<T>
+where
+    T: Board,
 {
     pub fn new(
-        initial_board: Rc<V>,
-        black_player: T,
-        white_player: U,
-        event_handler: Option<fn(GameEvent, &GameEventParameter)>,
-    ) -> Game<T, U, V> {
+        initial_board: Rc<T>,
+        black_player: Box<dyn Player>,
+        white_player: Box<dyn Player>,
+        event_handler: Option<Box<dyn GameEventHandler>>,
+    ) -> Game<T> {
         Game {
             board: initial_board,
             black_player,
@@ -72,13 +72,13 @@ where
     }
 
     pub fn run(&mut self) {
-        if let Some(event_handler) = self.event_handler {
-            event_handler(GameEvent::Started, &GameEventParameter::new(&(*self.board)));
+        if let Some(event_handler) = &self.event_handler {
+            event_handler.handle(GameEvent::Started, &GameEventParameter::new(&(*self.board)));
         }
 
         loop {
-            if let Some(event_handler) = self.event_handler {
-                event_handler(
+            if let Some(event_handler) = &self.event_handler {
+                event_handler.handle(
                     GameEvent::TurnStarted,
                     &GameEventParameter::new(&(*self.board)),
                 );
@@ -92,8 +92,8 @@ where
                     .take_action(&GameEventParameter::new(&(*self.board)))
             };
 
-            if let Some(event_handler) = self.event_handler {
-                event_handler(
+            if let Some(event_handler) = &self.event_handler {
+                event_handler.handle(
                     GameEvent::TurnEnded,
                     &GameEventParameter::new(&(*self.board)),
                 );
@@ -109,8 +109,8 @@ where
             }
         }
 
-        if let Some(event_handler) = self.event_handler {
-            event_handler(
+        if let Some(event_handler) = &self.event_handler {
+            event_handler.handle(
                 GameEvent::GameOver,
                 &GameEventParameter::new(&(*self.board)),
             );
@@ -194,8 +194,8 @@ mod tests {
         {
             let indexer = Rc::new(Indexer::new());
             let board = Rc::new(IndexBoard::new_initial(indexer));
-            let black = Test1Player::new();
-            let white = Test1Player::new();
+            let black = Box::new(Test1Player::new());
+            let white = Box::new(Test1Player::new());
             let mut reversi = Game::new(board, black, white, None);
             reversi.run();
 
@@ -207,8 +207,8 @@ mod tests {
         {
             let indexer = Rc::new(Indexer::new());
             let board = Rc::new(IndexBoard::new_initial(indexer));
-            let black = Test2Player::new();
-            let white = Test2Player::new();
+            let black = Box::new(Test2Player::new());
+            let white = Box::new(Test2Player::new());
             let mut reversi = Game::new(board, black, white, None);
             reversi.run();
 
@@ -222,8 +222,8 @@ mod tests {
     fn test_array_board_run() {
         {
             let board = Rc::new(ArrayBoard::new_initial());
-            let black = Test1Player::new();
-            let white = Test1Player::new();
+            let black = Box::new(Test1Player::new());
+            let white = Box::new(Test1Player::new());
             let mut reversi = Game::new(board, black, white, None);
             reversi.run();
 
@@ -234,8 +234,8 @@ mod tests {
 
         {
             let board = Rc::new(ArrayBoard::new_initial());
-            let black = Test2Player::new();
-            let white = Test2Player::new();
+            let black = Box::new(Test2Player::new());
+            let white = Box::new(Test2Player::new());
             let mut reversi = Game::new(board, black, white, None);
             reversi.run();
 
