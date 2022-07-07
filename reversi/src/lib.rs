@@ -1,4 +1,4 @@
-mod ffi;
+mod api;
 mod reversi;
 
 pub use crate::reversi::ai;
