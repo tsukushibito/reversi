@@ -83,14 +83,14 @@ pub struct ReversiAction {
 }
 
 #[repr(C)]
-pub struct InitParam {
+pub struct ReversiInitParam {
     pub game_event_handler: Option<extern "C" fn(ReversiGameEvent, &ReversiGameEventParam)>,
     pub black_player_action: Option<extern "C" fn(&ReversiGameEventParam) -> ReversiAction>,
     pub white_player_action: Option<extern "C" fn(&ReversiGameEventParam) -> ReversiAction>,
 }
 
 #[no_mangle]
-pub extern "C" fn reversi_create_game(param: &InitParam) -> *mut Game<BitBoard> {
+pub extern "C" fn reversi_create_game(param: &ReversiInitParam) -> *mut Game<BitBoard> {
     let board = Rc::new(BitBoard::new_initial());
 
     let black_player: Box<dyn Player> = if let Some(action_func) = param.black_player_action {
