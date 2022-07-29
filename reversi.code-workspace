@@ -1,8 +1,12 @@
 {
 	"folders": [
 		{
-			"path": "reversi"
+			"name": "root",
+			"path": "."
 		},
+		{
+			"path": "reversi"
+		}
 	],
 	"settings": {
 		"rust-analyzer.checkOnSave.command": "clippy",
@@ -14,7 +18,20 @@
 	"extensions": {
 		"recommendations": [
 			"ms-azuretools.vscode-docker",
-			"ms-vscode-remote.remote-containers"
+			"vadimcn.vscode-lldb"
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"type": "lldb",
+				"request": "launch",
+				"name": "Debug",
+				"program": "${workspaceFolder}/<executable file>",
+				"args": [],
+				"cwd": "${workspaceFolder}"
+			}
 		]
 	}
 }
