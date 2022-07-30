@@ -8,9 +8,17 @@
     objects = {
 /* Begin PBXBuildFile section */
         
-                CA6023CC531AB9DE80B2F656 /* Cargo.toml in Sources */ = {
+                CA60583AD6D6B35B46A22B74 /* Cargo.toml in Sources */ = {
                     isa = PBXBuildFile;
-                    fileRef = CA60E26E1DC33EF4668187A5 /* Cargo.toml */;
+                    fileRef = CA60E4340E7C3EF4668187A5 /* Cargo.toml */;
+                    settings = {
+                        COMPILER_FLAGS = "--lib"; /* == OTHER_INPUT_FILE_FLAGS */
+                    };
+                };
+                
+                CA60583AD6D66BD01C565B3C /* Cargo.toml in Sources */ = {
+                    isa = PBXBuildFile;
+                    fileRef = CA60E4340E7C3EF4668187A5 /* Cargo.toml */;
                     settings = {
                         COMPILER_FLAGS = "--lib"; /* == OTHER_INPUT_FILE_FLAGS */
                     };
@@ -19,7 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
-        CA60E26E1DC3AC6C1400ACA8 /* PBXBuildRule */ = {
+        CA60E4340E7CAC6C1400ACA8 /* PBXBuildRule */ = {
             isa = PBXBuildRule;
             compilerSpec = com.apple.compilers.proxy.script;
             dependencyFile = "$(DERIVED_FILE_DIR)/$(CARGO_XCODE_TARGET_ARCH)-$(EXECUTABLE_NAME).d";
@@ -37,14 +45,21 @@
 
 /* Begin PBXFileReference section */
         
-        CA60F967972E6FA83531AC4B /* cdylib */ = {
+        CA60D4437EEE6FA83531AC4B /* cdylib */ = {
             isa = PBXFileReference;
             explicitFileType = "compiled.mach-o.dylib";
             includeInIndex = 0;
             name = "reversi.dylib";
             sourceTree = TARGET_BUILD_DIR;
         };
-                CA60E26E1DC33EF4668187A5 /* Cargo.toml */ = {
+        CA605A843CF52BA6ACB50FEE /* staticlib */ = {
+            isa = PBXFileReference;
+            explicitFileType = "archive.ar";
+            includeInIndex = 0;
+            name = "libreversi_static.a";
+            sourceTree = TARGET_BUILD_DIR;
+        };
+                CA60E4340E7C3EF4668187A5 /* Cargo.toml */ = {
                     isa = PBXFileReference;
                     lastKnownFileType = text;
                     fileEncoding = 4;
@@ -52,36 +67,52 @@
                     path = "Cargo.toml";
                     sourceTree = "<group>";
             };
+                    /* Rust needs libresolv */
+                    ADDEDBA66A6E1 = {
+                        isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition";
+                        name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT;
+                    };
+                
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-        CA60E26E1DC398AF0B5890DB /* Frameworks */ = {
+        CA60E4340E7C98AF0B5890DB /* Frameworks */ = {
             isa = PBXGroup;
             children = (
-                
+                ADDEDBA66A6E2,
+
             );
             name = Frameworks;
             sourceTree = "<group>";
         };
 
         
+                ADDEDBA66A6E2 /* Required for static linking */ = {
+                    isa = PBXGroup;
+                    children = (
+                        ADDEDBA66A6E1
+                    );
+                    name = "Required for static linking";
+                    sourceTree = "<group>";
+                };
 
-        CA60E26E1DC322869D176AE5 /* Products */ = {
+        CA60E4340E7C22869D176AE5 /* Products */ = {
             isa = PBXGroup;
             children = (
-                CA60F967972E6FA83531AC4B,
+                CA60D4437EEE6FA83531AC4B,
+CA605A843CF52BA6ACB50FEE,
 
             );
             name = Products;
             sourceTree = "<group>";
         };
 
-        CA60E26E1DC3D65BC3C892A8 /* Main */ = {
+        CA60E4340E7CD65BC3C892A8 /* Main */ = {
             isa = PBXGroup;
             children = (
-                CA60E26E1DC33EF4668187A5,
-CA60E26E1DC322869D176AE5,
-CA60E26E1DC398AF0B5890DB,
+                CA60E4340E7C3EF4668187A5,
+CA60E4340E7C22869D176AE5,
+CA60E4340E7C98AF0B5890DB,
 
             );
             sourceTree = "<group>";
@@ -90,45 +121,62 @@ CA60E26E1DC398AF0B5890DB,
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-        CA60F967972EB9DE80B2F656 /* reversi-cdylib */ = {
+        CA60D4437EEEB35B46A22B74 /* reversi-cdylib */ = {
             isa = PBXNativeTarget;
-            buildConfigurationList = CA60911D10C1B9DE80B2F656;
+            buildConfigurationList = CA60C2A54976B35B46A22B74;
             buildPhases = (
-                CA60501434E3B9DE80B2F656 /* Sources */,
-                CA60E26E1DC3AF6EBB7F357C /* Universal Binary lipo */,
+                CA601FD4766AB35B46A22B74 /* Sources */,
+                CA60E4340E7CAF6EBB7F357C /* Universal Binary lipo */,
             );
             buildRules = (
-                CA60E26E1DC3AC6C1400ACA8 /* PBXBuildRule */,
+                CA60E4340E7CAC6C1400ACA8 /* PBXBuildRule */,
             );
             dependencies = (
             );
             name = "reversi-cdylib";
             productName = "reversi.dylib";
-            productReference = CA60F967972E6FA83531AC4B;
+            productReference = CA60D4437EEE6FA83531AC4B;
             productType = "com.apple.product-type.library.dynamic";
+        };
+        CA605A843CF56BD01C565B3C /* reversi-staticlib */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = CA60C2A549766BD01C565B3C;
+            buildPhases = (
+                CA601FD4766A6BD01C565B3C /* Sources */,
+                CA60E4340E7CAF6EBB7F357C /* Universal Binary lipo */,
+            );
+            buildRules = (
+                CA60E4340E7CAC6C1400ACA8 /* PBXBuildRule */,
+            );
+            dependencies = (
+            );
+            name = "reversi-staticlib";
+            productName = "libreversi_static.a";
+            productReference = CA605A843CF52BA6ACB50FEE;
+            productType = "com.apple.product-type.library.static";
         };
         
 /* End PBXNativeTarget section */
 
-        CA60501434E3B9DE80B2F656 = {
+        CA601FD4766AB35B46A22B74 = {
                     isa = PBXSourcesBuildPhase;
                     buildActionMask = 2147483647;
                     files = (
-                        CA6023CC531AB9DE80B2F656
+                        CA60583AD6D6B35B46A22B74
                     );
                     runOnlyForDeploymentPostprocessing = 0;
                 };
                 
-        CA60911D10C1B9DE80B2F656 /* cdylib */ = {
+        CA60C2A54976B35B46A22B74 /* cdylib */ = {
             isa = XCConfigurationList;
             buildConfigurations = (
-                CA60A9AB86E8B9DE80B2F656 /* Release */,
-                CA605E33F651B9DE80B2F656 /* Debug */,
+                CA60ECDFC22CB35B46A22B74 /* Release */,
+                CA606E437C1CB35B46A22B74 /* Debug */,
             );
             defaultConfigurationIsVisible = 0;
             defaultConfigurationName = Release;
         };
-            CA60A9AB86E8B9DE80B2F656 /* cdylib */ = {
+            CA60ECDFC22CB35B46A22B74 /* cdylib */ = {
                 isa = XCBuildConfiguration;
                 buildSettings = {
                     PRODUCT_NAME = "reversi";
@@ -139,7 +187,7 @@ CA60E26E1DC398AF0B5890DB,
                 };
                 name = Release;
             };
-            CA605E33F651B9DE80B2F656 /* cdylib */ = {
+            CA606E437C1CB35B46A22B74 /* cdylib */ = {
                 isa = XCBuildConfiguration;
                 buildSettings = {
                     PRODUCT_NAME = "reversi";
@@ -149,9 +197,54 @@ CA60E26E1DC398AF0B5890DB,
                     
                 };
                 name = Debug;
+            };CA601FD4766A6BD01C565B3C = {
+                    isa = PBXSourcesBuildPhase;
+                    buildActionMask = 2147483647;
+                    files = (
+                        CA60583AD6D66BD01C565B3C
+                    );
+                    runOnlyForDeploymentPostprocessing = 0;
+                };
+                
+        CA60C2A549766BD01C565B3C /* staticlib */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                CA60ECDFC22C6BD01C565B3C /* Release */,
+                CA606E437C1C6BD01C565B3C /* Debug */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+            CA60ECDFC22C6BD01C565B3C /* staticlib */ = {
+                isa = XCBuildConfiguration;
+                buildSettings = {
+                    PRODUCT_NAME = "reversi_static";
+                    "CARGO_XCODE_CARGO_FILE_NAME" = "libreversi.a";
+                    "CARGO_XCODE_CARGO_DEP_FILE_NAME" = "libreversi.d";
+                    SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos appletvsimulator appletvos";
+                    SKIP_INSTALL = YES;
+                INSTALL_GROUP = "";
+                INSTALL_MODE_FLAG = "";
+                INSTALL_OWNER = "";
+                };
+                name = Release;
+            };
+            CA606E437C1C6BD01C565B3C /* staticlib */ = {
+                isa = XCBuildConfiguration;
+                buildSettings = {
+                    PRODUCT_NAME = "reversi_static";
+                    "CARGO_XCODE_CARGO_FILE_NAME" = "libreversi.a";
+                    "CARGO_XCODE_CARGO_DEP_FILE_NAME" = "libreversi.d";
+                    SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos appletvsimulator appletvos";
+                    SKIP_INSTALL = YES;
+                INSTALL_GROUP = "";
+                INSTALL_MODE_FLAG = "";
+                INSTALL_OWNER = "";
+                };
+                name = Debug;
             };
 
-        CA60E26E1DC3AF6EBB7F357C /* LipoScript */ = {
+        CA60E4340E7CAF6EBB7F357C /* LipoScript */ = {
             name = "Universal Binary lipo";
             isa = PBXShellScriptBuildPhase;
             buildActionMask = 2147483647;
@@ -169,17 +262,17 @@ CA60E26E1DC398AF0B5890DB,
             shellScript = "# generated with cargo-xcode 1.4.2\nset -eux; cat \"$DERIVED_FILE_DIR/$ARCHS-$EXECUTABLE_NAME.xcfilelist\" | tr '\\n' '\\0' | xargs -0 lipo -create -output \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\"";
         };
 
-        CA60E26E1DC380E02D6C7F57 = {
+        CA60E4340E7C80E02D6C7F57 = {
             isa = XCConfigurationList;
             buildConfigurations = (
-                CA60369B3C243CC16B37690B /* Release */,
-                CA60369B3C24228BE02872F8 /* Debug */,
+                CA60652365933CC16B37690B /* Release */,
+                CA6065236593228BE02872F8 /* Debug */,
             );
             defaultConfigurationIsVisible = 0;
             defaultConfigurationName = Release;
         };
 
-        CA60369B3C243CC16B37690B = {
+        CA60652365933CC16B37690B = {
             isa = XCBuildConfiguration;
             buildSettings = {
                 
@@ -204,7 +297,7 @@ CA60E26E1DC398AF0B5890DB,
             name = Release;
         };
 
-        CA60369B3C24228BE02872F8 = {
+        CA6065236593228BE02872F8 = {
             isa = XCBuildConfiguration;
             buildSettings = {
                 
@@ -230,18 +323,22 @@ CA60E26E1DC398AF0B5890DB,
             name = Debug;
         };
 
-        CA60E26E1DC3E04653AD465F = {
+        CA60E4340E7CE04653AD465F = {
             isa = PBXProject;
             attributes = {
                 LastUpgradeCheck = 1300;
                 TargetAttributes = {
-                    CA60F967972EB9DE80B2F656 = {
+                    CA60D4437EEEB35B46A22B74 = {
+                        CreatedOnToolsVersion = 9.2;
+                        ProvisioningStyle = Automatic;
+                    };
+                    CA605A843CF56BD01C565B3C = {
                         CreatedOnToolsVersion = 9.2;
                         ProvisioningStyle = Automatic;
                     };
                                     };
             };
-            buildConfigurationList = CA60E26E1DC380E02D6C7F57;
+            buildConfigurationList = CA60E4340E7C80E02D6C7F57;
             compatibilityVersion = "Xcode 11.4";
              developmentRegion = en;
             hasScannedForEncodings = 0;
@@ -249,17 +346,18 @@ CA60E26E1DC398AF0B5890DB,
                     en,
                     Base,
             );
-            mainGroup = CA60E26E1DC3D65BC3C892A8;
-            productRefGroup = CA60E26E1DC322869D176AE5 /* Products */;
+            mainGroup = CA60E4340E7CD65BC3C892A8;
+            productRefGroup = CA60E4340E7C22869D176AE5 /* Products */;
             projectDirPath = "";
             projectRoot = "";
             targets = (
-                CA60F967972EB9DE80B2F656,
+                CA60D4437EEEB35B46A22B74,
+CA605A843CF56BD01C565B3C,
 
             );
         };
 
     };
-    rootObject = CA60E26E1DC3E04653AD465F;
+    rootObject = CA60E4340E7CE04653AD465F;
 }
     
