@@ -16,7 +16,8 @@
 		"rust-analyzer.inlayHints.chainingHints.enable": false,
 		"rust-analyzer.inlayHints.parameterHints.enable": false,
 		"rust-analyzer.inlayHints.typeHints.enable": false,
-		"rust-analyzer.cargoRunner": null
+		"rust-analyzer.cargoRunner": null,
+		"dart.flutterSdkPath": "${workspaceFolder}/app/.fvm/flutter_sdk"
 	},
 	"extensions": {
 		"recommendations": [
