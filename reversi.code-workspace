@@ -12,10 +12,6 @@
 		},
 		{
 			"path": "plugin"
-		},
-		{
-			"path": "plugin/example",
-			"name": "plugin/example"
 		}
 	],
 	"settings": {
