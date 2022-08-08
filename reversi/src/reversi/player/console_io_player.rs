@@ -21,10 +21,11 @@ impl Player for ConsoleIoPlayer {
         println!("[{}]", state.depth);
         println!("   a b c d e f g h");
         println!("   ----------------");
-        for (i, row) in state.board.iter().enumerate() {
-            let mut r = (i + 1).to_string() + "|";
-            for square in row {
-                r += match square {
+        for r in 0..BOARD_SIZE {
+            let mut row_string = (r + 1).to_string() + "|";
+            let index = r * BOARD_SIZE;
+            for square in &state.board[index..index + BOARD_SIZE] {
+                row_string += match square {
                     Square::Empty => " .",
                     Square::Black => " b",
                     Square::White => " w",

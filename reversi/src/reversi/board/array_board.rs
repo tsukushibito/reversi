@@ -1,4 +1,5 @@
 use crate::board::Board;
+use crate::position_to_index;
 use crate::Action;
 use crate::ActionType;
 use crate::PlayerColor;
@@ -29,11 +30,11 @@ pub struct ArrayBoard {
 impl ArrayBoard {
     /// 新規作成
     pub fn new_initial() -> ArrayBoard {
-        let mut squares: Squares = [[Square::Empty; BOARD_SIZE]; BOARD_SIZE];
-        squares[3][4] = Square::Black;
-        squares[4][3] = Square::Black;
-        squares[3][3] = Square::White;
-        squares[4][4] = Square::White;
+        let mut squares: Squares = [Square::Empty; BOARD_SIZE * BOARD_SIZE];
+        squares[position_to_index(&Position(3, 4))] = Square::Black;
+        squares[position_to_index(&Position(4, 3))] = Square::Black;
+        squares[position_to_index(&Position(3, 3))] = Square::White;
+        squares[position_to_index(&Position(4, 4))] = Square::White;
 
         ArrayBoard::new(squares, 0, None)
     }
@@ -46,7 +47,7 @@ impl ArrayBoard {
         }
     }
 
-    fn get_flip_count(&self, color: &PlayerColor, pos: &(usize, usize), dir: &(i32, i32)) -> i32 {
+    fn get_flip_count(&self, color: &PlayerColor, pos: &Position, dir: &(i32, i32)) -> i32 {
         let color = match color {
             PlayerColor::Black => Square::Black,
             PlayerColor::White => Square::White,
@@ -54,10 +55,12 @@ impl ArrayBoard {
         let mut r = pos.0 as i32 + dir.0;
         let mut c = pos.1 as i32 + dir.1;
         loop {
-            if !is_valid_pos((r, c)) {
+            let target_pos = Position(r as usize, c as usize);
+            if !is_valid_pos(&target_pos) {
                 break;
             }
-            let s = self.squares[r as usize][c as usize];
+            let index = position_to_index(&target_pos);
+            let s = self.squares[index];
             if s == color || s == Square::Empty {
                 break;
             }
@@ -65,10 +68,11 @@ impl ArrayBoard {
             c += dir.1;
         }
 
-        if is_valid_pos((r, c)) && self.squares[r as usize][c as usize] == color {
-            let d = get_distance((pos.0 as i32, pos.1 as i32), (r, c));
+        let target_pos = Position(r as usize, c as usize);
+        if is_valid_pos(&target_pos) && self.squares[position_to_index(&target_pos)] == color {
+            let d = get_distance(pos, &target_pos);
             if d >= 2 {
-                return d - 1;
+                return d as i32 - 1;
             }
         }
 
@@ -89,7 +93,8 @@ impl Board for ArrayBoard {
                 }
             }
             ActionType::Move(position) => {
-                if self.squares[position.0][position.1] != Square::Empty {
+                let index = position_to_index(&position);
+                if self.squares[index] != Square::Empty {
                     // 空きマス以外には石を置けない
                     return None;
                 }
@@ -106,15 +111,15 @@ impl Board for ArrayBoard {
                     };
 
                     // アクションの箇所に石を置く
-                    squares[position.0][position.1] = square_color;
+                    squares[index] = square_color;
                     for dir in DIRECTIONS {
-                        let flip =
-                            self.get_flip_count(&action.color, &(position.0, position.1), &dir);
+                        let flip = self.get_flip_count(&action.color, &position, &dir);
                         let mut pos = (position.0 as i32, position.1 as i32);
                         for _ in 0..flip {
                             pos.0 += dir.0;
                             pos.1 += dir.1;
-                            squares[pos.0 as usize][pos.1 as usize] = square_color;
+                            let i = position_to_index(&Position(pos.0 as usize, pos.1 as usize));
+                            squares[i] = square_color;
                         }
                     }
 
@@ -130,13 +135,15 @@ impl Board for ArrayBoard {
         let mut positions = Vec::new();
         for row in 0..BOARD_SIZE {
             for col in 0..BOARD_SIZE {
-                if self.squares[row][col] != Square::Empty {
+                let pos = Position(row, col);
+                let index = position_to_index(&pos);
+                if self.squares[index] != Square::Empty {
                     continue;
                 }
                 for dir in DIRECTIONS {
-                    let flip = self.get_flip_count(color, &(row, col), &dir);
+                    let flip = self.get_flip_count(color, &pos, &dir);
                     if flip > 0 {
-                        positions.push(Position(row, col));
+                        positions.push(pos);
                         break;
                     }
                 }
@@ -147,11 +154,9 @@ impl Board for ArrayBoard {
 
     fn square_count(&self, color: Square) -> u32 {
         let mut count = 0;
-        for row in &self.squares {
-            for s in row {
-                if *s == color {
-                    count += 1;
-                }
+        for s in &self.squares {
+            if *s == color {
+                count += 1;
             }
         }
         count
@@ -174,13 +179,16 @@ impl Board for ArrayBoard {
     }
 }
 
-fn is_valid_pos(pos: (i32, i32)) -> bool {
-    let size = BOARD_SIZE as i32;
-    pos.0 >= 0 && pos.0 < size && pos.1 >= 0 && pos.1 < size
+fn is_valid_pos(pos: &Position) -> bool {
+    let size = BOARD_SIZE;
+    pos.0 < size && pos.1 < size
 }
 
-fn get_distance(p0: (i32, i32), p1: (i32, i32)) -> i32 {
-    i32::max((p0.0 - p1.0).abs(), (p0.1 - p1.1).abs())
+fn get_distance(p0: &Position, p1: &Position) -> u32 {
+    u32::max(
+        (p0.0 as i32 - p1.0 as i32).unsigned_abs(),
+        (p0.1 as i32 - p1.1 as i32).unsigned_abs(),
+    )
 }
 
 #[cfg(test)]
@@ -199,21 +207,21 @@ mod tests {
         let r = board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
-        assert!(next_board.squares[2][3] == Square::Black);
-        assert!(next_board.squares[3][3] == Square::Black);
-        assert!(next_board.squares[4][3] == Square::Black);
-        assert!(next_board.squares[3][4] == Square::Black);
-        assert!(next_board.squares[4][4] == Square::White);
+        assert!(next_board.squares[position_to_index(&Position(2, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(3, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(4, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(3, 4))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(4, 4))] == Square::White);
 
         let act = Action::new(PlayerColor::White, ActionType::Move(Position(2, 2)));
         let r = next_board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
-        assert!(next_board.squares[2][3] == Square::Black);
-        assert!(next_board.squares[4][3] == Square::Black);
-        assert!(next_board.squares[3][4] == Square::Black);
-        assert!(next_board.squares[2][2] == Square::White);
-        assert!(next_board.squares[3][3] == Square::White);
-        assert!(next_board.squares[4][4] == Square::White);
+        assert!(next_board.squares[position_to_index(&Position(2, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(4, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(3, 4))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(2, 2))] == Square::White);
+        assert!(next_board.squares[position_to_index(&Position(3, 3))] == Square::White);
+        assert!(next_board.squares[position_to_index(&Position(4, 4))] == Square::White);
     }
 }

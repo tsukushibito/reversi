@@ -18,7 +18,6 @@ where
     let value = board
         .squares()
         .iter()
-        .flatten()
         .zip(weight_table.iter())
         .fold(0, |v, (s, w)| -> i32 {
             let color = match color {

@@ -1,6 +1,13 @@
 pub const BOARD_SIZE: usize = 8;
 
-pub type Squares = [[Square; BOARD_SIZE]; BOARD_SIZE];
+pub type Squares = [Square; BOARD_SIZE * BOARD_SIZE];
+pub const fn position_to_index(pos: &Position) -> usize {
+    BOARD_SIZE * pos.0 + pos.1
+}
+
+pub const fn index_to_position(index: usize) -> Position {
+    Position(index / BOARD_SIZE, index % BOARD_SIZE)
+}
 
 /// 方向
 pub enum LineDirection {

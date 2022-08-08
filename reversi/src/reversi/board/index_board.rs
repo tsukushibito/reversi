@@ -16,11 +16,11 @@ pub struct IndexBoard {
 impl IndexBoard {
     /// 新規作成
     pub fn new_initial(indexer: Rc<Indexer>) -> IndexBoard {
-        let mut squares: Squares = [[Square::Empty; BOARD_SIZE]; BOARD_SIZE];
-        squares[3][4] = Square::Black;
-        squares[4][3] = Square::Black;
-        squares[3][3] = Square::White;
-        squares[4][4] = Square::White;
+        let mut squares: Squares = [Square::Empty; BOARD_SIZE * BOARD_SIZE];
+        squares[position_to_index(&Position(3, 4))] = Square::Black;
+        squares[position_to_index(&Position(4, 3))] = Square::Black;
+        squares[position_to_index(&Position(3, 3))] = Square::White;
+        squares[position_to_index(&Position(4, 4))] = Square::White;
 
         IndexBoard::new(squares, 0, None, indexer)
     }
@@ -75,12 +75,14 @@ impl IndexBoard {
         let mut line = [Square::Empty; BOARD_SIZE];
         match dir {
             LineDirection::Left2Right => {
-                line.copy_from_slice(&self.squares[pos.0]);
+                let index = position_to_index(&Position(pos.0, 0));
+                line.copy_from_slice(&self.squares[index..index + BOARD_SIZE]);
                 line
             }
             LineDirection::Top2Bottom => {
                 for (i, l) in line.iter_mut().enumerate() {
-                    *l = self.squares[i][pos.1];
+                    let index = position_to_index(&Position(i, pos.1));
+                    *l = self.squares[index];
                 }
                 line
             }
@@ -90,7 +92,8 @@ impl IndexBoard {
                 let mut r = (row - col).max(0) as usize;
                 let mut c = (col - row).max(0) as usize;
                 for l in line.iter_mut() {
-                    *l = self.squares[r][c];
+                    let index = position_to_index(&Position(r, c));
+                    *l = self.squares[index];
                     r += 1;
                     c += 1;
                     if r >= BOARD_SIZE || c >= BOARD_SIZE {
@@ -105,7 +108,8 @@ impl IndexBoard {
                 let mut r = (row + col).min(BOARD_SIZE as i32 - 1);
                 let mut c = (row + col - (BOARD_SIZE as i32 - 1)).max(0);
                 for l in line.iter_mut() {
-                    *l = self.squares[r as usize][c as usize];
+                    let index = position_to_index(&Position(r as usize, c as usize));
+                    *l = self.squares[index];
                     r -= 1;
                     c += 1;
                     if r < 0 || c >= BOARD_SIZE as i32 {
@@ -139,7 +143,8 @@ impl Board for IndexBoard {
                 }
             }
             ActionType::Move(position) => {
-                if self.squares[position.0][position.1] != Square::Empty {
+                let index = position_to_index(&position);
+                if self.squares[index] != Square::Empty {
                     // 空きマス以外には石を置けない
                     return None;
                 }
@@ -167,50 +172,54 @@ impl Board for IndexBoard {
                 };
 
                 // アクションの箇所に石を置く
-                squares[position.0][position.1] = square_color;
+                squares[index] = square_color;
 
                 // 左右方向
                 for p in 1..=l2r_finfo.higher {
                     let c = position.1 + p as usize;
-                    squares[position.0][c] = square_color;
+                    let index = position_to_index(&Position(position.0, c));
+                    squares[index] = square_color;
                 }
                 for p in 1..=l2r_finfo.lower {
                     let c = position.1 - p as usize;
-                    squares[position.0][c] = square_color;
+                    let index = position_to_index(&Position(position.0, c));
+                    squares[index] = square_color;
                 }
 
                 // 上下方向
                 for p in 1..=t2b_finfo.higher {
                     let r = position.0 + p as usize;
-                    squares[r][position.1] = square_color;
+                    let index = position_to_index(&Position(r, position.1));
+                    squares[index] = square_color;
                 }
                 for p in 1..=t2b_finfo.lower {
                     let r = position.0 - p as usize;
-                    squares[r][position.1] = square_color;
+                    let index = position_to_index(&Position(r, position.1));
+                    squares[index] = square_color;
                 }
 
                 // 左上右下方向
                 for p in 1..=tl2br_finfo.higher {
                     let r = position.0 + p as usize;
                     let c = position.1 + p as usize;
-                    squares[r][c] = square_color;
+                    squares[position_to_index(&Position(r, c))] = square_color;
                 }
                 for p in 1..=tl2br_finfo.lower {
                     let r = position.0 - p as usize;
                     let c = position.1 - p as usize;
-                    squares[r][c] = square_color;
+                    squares[position_to_index(&Position(r, c))] = square_color;
                 }
 
                 // 左下右上方向
                 for p in 1..=bl2tr_finfo.higher {
                     let r = position.0 - p as usize;
                     let c = position.1 + p as usize;
-                    squares[r][c] = square_color;
+                    squares[position_to_index(&Position(r, c))] = square_color;
                 }
                 for p in 1..=bl2tr_finfo.lower {
                     let r = position.0 + p as usize;
                     let c = position.1 - p as usize;
-                    squares[r][c] = square_color;
+                    squares[position_to_index(&Position(r, c))] = square_color;
                 }
 
                 Some(IndexBoard::new(
@@ -240,11 +249,9 @@ impl Board for IndexBoard {
 
     fn square_count(&self, color: Square) -> u32 {
         let mut count = 0;
-        for row in &self.squares {
-            for s in row {
-                if *s == color {
-                    count += 1;
-                }
+        for s in &self.squares {
+            if *s == color {
+                count += 1;
             }
         }
         count
@@ -322,21 +329,21 @@ mod tests {
         let r = board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
-        assert!(next_board.squares[2][3] == Square::Black);
-        assert!(next_board.squares[3][3] == Square::Black);
-        assert!(next_board.squares[4][3] == Square::Black);
-        assert!(next_board.squares[3][4] == Square::Black);
-        assert!(next_board.squares[4][4] == Square::White);
+        assert!(next_board.squares[position_to_index(&Position(2, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(3, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(4, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(3, 4))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(4, 4))] == Square::White);
 
         let act = Action::new(PlayerColor::White, ActionType::Move(Position(2, 2)));
         let r = next_board.apply_action(&act);
         assert!(r.is_some());
         let next_board = r.unwrap();
-        assert!(next_board.squares[2][3] == Square::Black);
-        assert!(next_board.squares[4][3] == Square::Black);
-        assert!(next_board.squares[3][4] == Square::Black);
-        assert!(next_board.squares[2][2] == Square::White);
-        assert!(next_board.squares[3][3] == Square::White);
-        assert!(next_board.squares[4][4] == Square::White);
+        assert!(next_board.squares[position_to_index(&Position(2, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(4, 3))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(3, 4))] == Square::Black);
+        assert!(next_board.squares[position_to_index(&Position(2, 2))] == Square::White);
+        assert!(next_board.squares[position_to_index(&Position(3, 3))] == Square::White);
+        assert!(next_board.squares[position_to_index(&Position(4, 4))] == Square::White);
     }
 }
