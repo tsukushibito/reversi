@@ -1,7 +1,9 @@
+use crate::board::BitBoard;
 use crate::board::Board;
 use crate::Action;
 use crate::ActionType;
 use crate::PlayerColor;
+use crate::Squares;
 
 #[derive(Debug)]
 pub enum SearchType {
@@ -40,7 +42,7 @@ where
         searched_nodes: &mut usize,
     ) -> (i32, Option<Action>)
     where
-        E: Fn(&T, &PlayerColor) -> i32,
+        E: Fn(&Squares, &PlayerColor) -> i32,
     {
         match search_type {
             SearchType::NegaAlpha => {
@@ -81,12 +83,12 @@ where
         searched_nodes: &mut usize,
     ) -> (i32, Option<Action>)
     where
-        E: Fn(&T, &PlayerColor) -> i32,
+        E: Fn(&Squares, &PlayerColor) -> i32,
     {
         self.children.clear();
         *searched_nodes += 1;
         if self.is_leaf(depth) {
-            self.value = evaluator(&self.board, &self.player_color);
+            self.value = evaluator(self.board.squares(), &self.player_color);
         } else {
             let positions = self.board.get_movable_positions(&self.player_color);
             if !positions.is_empty() {
@@ -144,11 +146,11 @@ where
         searched_nodes: &mut usize,
     ) -> (i32, Option<Action>)
     where
-        E: Fn(&T, &PlayerColor) -> i32,
+        E: Fn(&Squares, &PlayerColor) -> i32,
     {
         *searched_nodes += 1;
         if self.is_leaf(depth) {
-            self.value = evaluator(&self.board, &self.player_color);
+            self.value = evaluator(self.board.squares(), &self.player_color);
         } else {
             let positions = self.board.get_movable_positions(&self.player_color);
             if !positions.is_empty() {
@@ -194,18 +196,18 @@ pub struct SearchResult {
     pub searched_nodes: usize,
 }
 
-pub fn search_game_tree<T, E>(
-    board: &T,
+pub fn search_game_tree<T>(
+    board: &Squares,
     color: &PlayerColor,
-    evaluator: &E,
+    evaluator: &T,
     search_type: &SearchType,
     depth: usize,
 ) -> SearchResult
 where
-    T: Board,
-    E: Fn(&T, &PlayerColor) -> i32,
+    T: Fn(&Squares, &PlayerColor) -> i32,
 {
-    let mut root = GameTreeNode::new(board, color, None);
+    let board = BitBoard::new(*board, 0, None);
+    let mut root = GameTreeNode::new(&board, color, None);
     let mut searched_nodes = 0;
     let (value, action) = root.search(evaluator, search_type, depth, &mut searched_nodes);
     SearchResult {
@@ -219,6 +221,7 @@ where
 mod tests {
     use super::*;
     use crate::ai::simple_evaluate;
+    use crate::board::ArrayBoard;
     use crate::board::IndexBoard;
     use crate::board::Indexer;
     use crate::Action;
@@ -268,12 +271,12 @@ mod tests {
     }
     #[test]
     fn test_search_game_tree() {
-        let indexer = Rc::new(Indexer::new());
-        let board = IndexBoard::new_initial(indexer);
+        let board = ArrayBoard::new_initial();
+        let squares = board.squares();
         let depth = 7;
 
         let nega_max_result = search_game_tree(
-            &board,
+            squares,
             &PlayerColor::Black,
             &simple_evaluate,
             &SearchType::NegaMax,
@@ -286,7 +289,7 @@ mod tests {
         );
 
         let nega_alpha_result = search_game_tree(
-            &board,
+            squares,
             &PlayerColor::Black,
             &simple_evaluate,
             &SearchType::NegaAlpha,

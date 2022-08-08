@@ -2,6 +2,7 @@ use crate::ai::search_game_tree;
 use crate::ai::simple_evaluate;
 use crate::ai::SearchType;
 use crate::board::BitBoard;
+use crate::board::Board;
 use crate::game::GameEventParameter;
 use crate::player::Player;
 use crate::Action;
@@ -22,7 +23,7 @@ impl Player for AiPlayer {
         let board = BitBoard::new(state.board, state.depth, state.last_action);
         let color = state.turn;
         let result = search_game_tree(
-            &board,
+            board.squares(),
             &color,
             &simple_evaluate,
             &SearchType::NegaAlpha,
