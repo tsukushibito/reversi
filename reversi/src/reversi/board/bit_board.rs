@@ -259,9 +259,9 @@ impl Board for BitBoard {
 
     fn square_count(&self, color: Square) -> u32 {
         match color {
-            Square::Black => self.black_count(),
-            Square::White => self.white_count(),
-            Square::Empty => self.empty_count(),
+            Square::Black => self.black.count_ones(),
+            Square::White => self.white.count_ones(),
+            Square::Empty => (self.black | self.white).count_zeros(),
         }
     }
 
@@ -370,5 +370,14 @@ mod tests {
         assert!(next_board.squares[position_to_index(&Position(2, 2))] == Square::White);
         assert!(next_board.squares[position_to_index(&Position(3, 3))] == Square::White);
         assert!(next_board.squares[position_to_index(&Position(4, 4))] == Square::White);
+    }
+
+    #[test]
+    fn test_square_count() {
+        let board = BitBoard::new_initial();
+
+        assert_eq!(board.black_count(), 2);
+        assert_eq!(board.white_count(), 2);
+        assert_eq!(board.empty_count(), 60);
     }
 }
