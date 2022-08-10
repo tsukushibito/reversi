@@ -31,7 +31,7 @@ impl Player for ConsoleIoPlayer {
                     Square::White => " w",
                 }
             }
-            println!("{}", r);
+            println!("{}", row_string);
         }
         println!("Please input move position.");
 
