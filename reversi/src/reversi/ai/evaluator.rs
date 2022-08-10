@@ -1,5 +1,17 @@
 use crate::reversi::common::*;
 
+pub trait Evaluator {
+    fn evaluate(board: &Squares, color: &PlayerColor) -> i32;
+}
+
+pub struct SimpleEvaluator {}
+
+impl Evaluator for SimpleEvaluator {
+    fn evaluate(board: &Squares, color: &PlayerColor) -> i32 {
+        simple_evaluate(board, color)
+    }
+}
+
 pub fn simple_evaluate(board: &Squares, color: &PlayerColor) -> i32 {
     let weight_table: [i32; 64] = [
         30, -12, 0, -1, -1, 0, -12, 30, //

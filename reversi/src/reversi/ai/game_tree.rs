@@ -5,6 +5,8 @@ use crate::ActionType;
 use crate::PlayerColor;
 use crate::Squares;
 
+use super::Evaluator;
+
 #[derive(Debug)]
 pub enum SearchType {
     NegaMax,
@@ -36,19 +38,18 @@ where
 
     pub fn search<E>(
         &mut self,
-        evaluator: &E,
         search_type: &SearchType,
         depth: usize,
         searched_nodes: &mut usize,
     ) -> (i32, Option<Action>)
     where
-        E: Fn(&Squares, &PlayerColor) -> i32,
+        E: Evaluator,
     {
         match search_type {
             SearchType::NegaAlpha => {
-                self.nega_alpha(evaluator, depth, i32::MIN + 1, i32::MAX, searched_nodes)
+                self.nega_alpha::<E>(depth, i32::MIN + 1, i32::MAX, searched_nodes)
             }
-            SearchType::NegaMax => self.nega_max(evaluator, depth, searched_nodes),
+            SearchType::NegaMax => self.nega_max::<E>(depth, searched_nodes),
         }
     }
 
@@ -76,19 +77,19 @@ where
     /// return: (評価値, 次の手)
     fn nega_alpha<E>(
         &mut self,
-        evaluator: &E,
         depth: usize,
         alpha: i32,
         beta: i32,
         searched_nodes: &mut usize,
     ) -> (i32, Option<Action>)
     where
-        E: Fn(&Squares, &PlayerColor) -> i32,
+        // E: Fn(&Squares, &PlayerColor) -> i32,
+        E: Evaluator,
     {
         self.children.clear();
         *searched_nodes += 1;
         if self.is_leaf(depth) {
-            self.value = evaluator(self.board.squares(), &self.player_color);
+            self.value = E::evaluate(self.board.squares(), &self.player_color)
         } else {
             let positions = self.board.get_movable_positions(&self.player_color);
             if !positions.is_empty() {
@@ -104,7 +105,7 @@ where
                 let mut index = 0;
                 for (i, child) in self.children.iter_mut().enumerate() {
                     let v = -child
-                        .nega_alpha(evaluator, depth - 1, -beta, -alpha, searched_nodes)
+                        .nega_alpha::<E>(depth - 1, -beta, -alpha, searched_nodes)
                         .0;
                     if v >= beta {
                         break;
@@ -124,7 +125,7 @@ where
 
                 // 評価
                 self.value = -(self.children[0]
-                    .nega_alpha(evaluator, depth - 1, -beta, -alpha, searched_nodes)
+                    .nega_alpha::<E>(depth - 1, -beta, -alpha, searched_nodes)
                     .0);
 
                 self.action = Some(actions[0]);
@@ -139,18 +140,13 @@ where
     /// alpha: α値
     /// beta: ベータ値
     /// return: (評価値, 次の手)
-    fn nega_max<E>(
-        &mut self,
-        evaluator: &E,
-        depth: usize,
-        searched_nodes: &mut usize,
-    ) -> (i32, Option<Action>)
+    fn nega_max<E>(&mut self, depth: usize, searched_nodes: &mut usize) -> (i32, Option<Action>)
     where
-        E: Fn(&Squares, &PlayerColor) -> i32,
+        E: Evaluator,
     {
         *searched_nodes += 1;
         if self.is_leaf(depth) {
-            self.value = evaluator(self.board.squares(), &self.player_color);
+            self.value = E::evaluate(self.board.squares(), &self.player_color);
         } else {
             let positions = self.board.get_movable_positions(&self.player_color);
             if !positions.is_empty() {
@@ -164,7 +160,7 @@ where
                 let mut value = i32::MIN + 1;
                 let mut index = 0;
                 for (i, child) in self.children.iter_mut().enumerate() {
-                    let v = -child.nega_max(evaluator, depth - 1, searched_nodes).0;
+                    let v = -child.nega_max::<E>(depth - 1, searched_nodes).0;
                     if v > value {
                         value = v;
                         index = i;
@@ -179,9 +175,7 @@ where
                 self.expand(&actions);
 
                 // 評価
-                self.value = -(self.children[0]
-                    .nega_max(evaluator, depth - 1, searched_nodes)
-                    .0);
+                self.value = -(self.children[0].nega_max::<E>(depth - 1, searched_nodes).0);
 
                 self.action = Some(actions[0]);
             }
@@ -196,20 +190,19 @@ pub struct SearchResult {
     pub searched_nodes: usize,
 }
 
-pub fn search_game_tree<T>(
+pub fn search_game_tree<E>(
     board: &Squares,
     color: &PlayerColor,
-    evaluator: &T,
     search_type: &SearchType,
     depth: usize,
 ) -> SearchResult
 where
-    T: Fn(&Squares, &PlayerColor) -> i32,
+    E: Evaluator,
 {
     let board = BitBoard::new(*board, 0, None);
     let mut root = GameTreeNode::new(&board, color, None);
     let mut searched_nodes = 0;
-    let (value, action) = root.search(evaluator, search_type, depth, &mut searched_nodes);
+    let (value, action) = root.search::<E>(search_type, depth, &mut searched_nodes);
     SearchResult {
         value,
         action,
@@ -220,7 +213,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ai::simple_evaluate;
+    use crate::ai::SimpleEvaluator;
     use crate::board::ArrayBoard;
     use crate::board::IndexBoard;
     use crate::board::Indexer;
@@ -237,12 +230,8 @@ mod tests {
         let mut node = GameTreeNode::new(&board, &PlayerColor::Black, None);
 
         let mut searched_nodes: usize = 0;
-        let value_action = node.search(
-            &simple_evaluate,
-            &SearchType::NegaAlpha,
-            2,
-            &mut searched_nodes,
-        );
+        let value_action =
+            node.search::<SimpleEvaluator>(&SearchType::NegaAlpha, 2, &mut searched_nodes);
 
         assert_eq!(value_action.0, -1);
 
@@ -257,12 +246,8 @@ mod tests {
         let mut node = GameTreeNode::new(&board, &PlayerColor::Black, None);
 
         let mut searched_nodes: usize = 0;
-        let value_action = node.search(
-            &simple_evaluate,
-            &SearchType::NegaMax,
-            2,
-            &mut searched_nodes,
-        );
+        let value_action =
+            node.search::<SimpleEvaluator>(&SearchType::NegaMax, 2, &mut searched_nodes);
 
         assert_eq!(value_action.0, -1);
 
@@ -275,10 +260,9 @@ mod tests {
         let squares = board.squares();
         let depth = 7;
 
-        let nega_max_result = search_game_tree(
+        let nega_max_result = search_game_tree::<SimpleEvaluator>(
             squares,
             &PlayerColor::Black,
-            &simple_evaluate,
             &SearchType::NegaMax,
             depth,
         );
@@ -288,10 +272,9 @@ mod tests {
             depth, nega_max_result.searched_nodes
         );
 
-        let nega_alpha_result = search_game_tree(
+        let nega_alpha_result = search_game_tree::<SimpleEvaluator>(
             squares,
             &PlayerColor::Black,
-            &simple_evaluate,
             &SearchType::NegaAlpha,
             depth,
         );

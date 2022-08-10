@@ -1,4 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+use reversi::ai::SimpleEvaluator;
 use reversi::board::*;
 use reversi::*;
 
@@ -6,10 +7,9 @@ fn nega_max(c: &mut Criterion) {
     c.bench_function("NegaMax", |b| {
         b.iter(|| {
             let board = BitBoard::new_initial();
-            let _result = ai::search_game_tree(
+            let _result = ai::search_game_tree::<SimpleEvaluator>(
                 board.squares(),
                 &PlayerColor::Black,
-                &ai::simple_evaluate,
                 &ai::SearchType::NegaMax,
                 7,
             );
@@ -22,10 +22,9 @@ fn nega_alpha(c: &mut Criterion) {
     c.bench_function("NegaAlpha", |b| {
         b.iter(|| {
             let board = BitBoard::new_initial();
-            let _result = ai::search_game_tree(
+            let _result = ai::search_game_tree::<SimpleEvaluator>(
                 board.squares(),
                 &PlayerColor::Black,
-                &ai::simple_evaluate,
                 &ai::SearchType::NegaAlpha,
                 7,
             );
