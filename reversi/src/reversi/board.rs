@@ -13,7 +13,6 @@ pub use indexer::Indexer;
 pub trait Board {
     fn squares(&self) -> &Squares;
     fn depth(&self) -> u32;
-    fn last_action(&self) -> Option<Action>;
     fn square_count(&self, color: Square) -> u32;
     fn duplicate(&self) -> Self;
 

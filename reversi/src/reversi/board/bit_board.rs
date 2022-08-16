@@ -160,30 +160,27 @@ pub struct BitBoard {
     white: u64,
     squares: Squares,
     depth: u32,
-    last_action: Option<Action>,
 }
 
 impl BitBoard {
     /// Creates a new [`BitBoard`].
-    pub fn new(squares: Squares, depth: u32, last_action: Option<Action>) -> Self {
+    pub fn new(squares: Squares, depth: u32) -> Self {
         let (black, white) = squares_to_data(&squares);
         Self {
             black,
             white,
             squares,
             depth,
-            last_action,
         }
     }
 
-    pub fn new_from_data(black: u64, white: u64, depth: u32, last_action: Option<Action>) -> Self {
+    pub fn new_from_data(black: u64, white: u64, depth: u32) -> Self {
         let squares = data_to_squares(black, white);
         Self {
             black,
             white,
             squares,
             depth,
-            last_action,
         }
     }
 
@@ -194,7 +191,7 @@ impl BitBoard {
         squares[position_to_index(&Position(3, 3))] = Square::White;
         squares[position_to_index(&Position(4, 4))] = Square::White;
 
-        Self::new(squares, 0, None)
+        Self::new(squares, 0)
     }
 }
 
@@ -210,7 +207,6 @@ impl Board for BitBoard {
                         self.black,
                         self.white,
                         self.depth + 1,
-                        Some(*action),
                     ))
                 } else {
                     None
@@ -240,7 +236,6 @@ impl Board for BitBoard {
                     next_black,
                     next_white,
                     self.depth + 1,
-                    Some(*action),
                 ))
             }
         }
@@ -275,10 +270,6 @@ impl Board for BitBoard {
 
     fn depth(&self) -> u32 {
         self.depth
-    }
-
-    fn last_action(&self) -> Option<Action> {
-        self.last_action
     }
 }
 

@@ -24,7 +24,6 @@ const DIRECTIONS: [(i32, i32); BOARD_SIZE] = [
 pub struct ArrayBoard {
     squares: Squares,
     depth: u32,
-    last_action: Option<Action>,
 }
 
 impl ArrayBoard {
@@ -36,15 +35,11 @@ impl ArrayBoard {
         squares[position_to_index(&Position(3, 3))] = Square::White;
         squares[position_to_index(&Position(4, 4))] = Square::White;
 
-        ArrayBoard::new(squares, 0, None)
+        ArrayBoard::new(squares, 0)
     }
 
-    pub fn new(squares: Squares, depth: u32, last_action: Option<Action>) -> ArrayBoard {
-        ArrayBoard {
-            squares,
-            depth,
-            last_action,
-        }
+    pub fn new(squares: Squares, depth: u32) -> ArrayBoard {
+        ArrayBoard { squares, depth }
     }
 
     fn get_flip_count(&self, color: &PlayerColor, pos: &Position, dir: &(i32, i32)) -> i32 {
@@ -87,7 +82,7 @@ impl Board for ArrayBoard {
                 // パスできるかチェック
                 let movables = self.get_movable_positions(&action.color);
                 if movables.is_empty() {
-                    Some(ArrayBoard::new(self.squares, self.depth + 1, Some(*action)))
+                    Some(ArrayBoard::new(self.squares, self.depth + 1))
                 } else {
                     None
                 }
@@ -123,7 +118,7 @@ impl Board for ArrayBoard {
                         }
                     }
 
-                    Some(ArrayBoard::new(squares, self.depth + 1, Some(*action)))
+                    Some(ArrayBoard::new(squares, self.depth + 1))
                 } else {
                     None
                 }
@@ -172,10 +167,6 @@ impl Board for ArrayBoard {
 
     fn depth(&self) -> u32 {
         self.depth
-    }
-
-    fn last_action(&self) -> Option<Action> {
-        self.last_action
     }
 }
 

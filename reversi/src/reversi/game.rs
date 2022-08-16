@@ -21,7 +21,7 @@ pub struct GameEventParameter {
 }
 
 impl GameEventParameter {
-    pub fn new<T>(board: &T) -> Self
+    pub fn new<T>(board: &T, last_action: Option<Action>) -> Self
     where
         T: Board,
     {
@@ -32,7 +32,7 @@ impl GameEventParameter {
             white_count: board.white_count(),
             is_end: board.is_game_over(),
             turn: board.turn(),
-            last_action: board.last_action(),
+            last_action,
         }
     }
 }
@@ -46,6 +46,7 @@ where
     T: Board,
 {
     board: Rc<T>,
+    last_action: Option<Action>,
     black_player: Box<dyn Player>,
     white_player: Box<dyn Player>,
     board_history: Vec<Rc<T>>,
@@ -64,6 +65,7 @@ where
     ) -> Game<T> {
         Game {
             board: initial_board,
+            last_action: None,
             black_player,
             white_player,
             board_history: Default::default(),
@@ -73,33 +75,37 @@ where
 
     pub fn run(&mut self) {
         if let Some(event_handler) = &self.event_handler {
-            event_handler.handle(GameEvent::Started, &GameEventParameter::new(&(*self.board)));
+            event_handler.handle(
+                GameEvent::Started,
+                &GameEventParameter::new(&(*self.board), self.last_action),
+            );
         }
 
         loop {
             if let Some(event_handler) = &self.event_handler {
                 event_handler.handle(
                     GameEvent::TurnStarted,
-                    &GameEventParameter::new(&(*self.board)),
+                    &GameEventParameter::new(&(*self.board), self.last_action),
                 );
             }
 
             let action = if self.board.turn() == PlayerColor::Black {
                 self.black_player
-                    .take_action(&GameEventParameter::new(&(*self.board)))
+                    .take_action(&GameEventParameter::new(&(*self.board), self.last_action))
             } else {
                 self.white_player
-                    .take_action(&GameEventParameter::new(&(*self.board)))
+                    .take_action(&GameEventParameter::new(&(*self.board), self.last_action))
             };
 
             if let Some(event_handler) = &self.event_handler {
                 event_handler.handle(
                     GameEvent::TurnEnded,
-                    &GameEventParameter::new(&(*self.board)),
+                    &GameEventParameter::new(&(*self.board), self.last_action),
                 );
             }
 
             if let Some(next_board) = self.board.apply_action(&action) {
+                self.last_action = Some(action);
                 self.board_history.push(self.board.clone());
                 self.board = Rc::new(next_board);
 
@@ -112,7 +118,7 @@ where
         if let Some(event_handler) = &self.event_handler {
             event_handler.handle(
                 GameEvent::GameOver,
-                &GameEventParameter::new(&(*self.board)),
+                &GameEventParameter::new(&(*self.board), self.last_action),
             );
         }
     }
@@ -145,12 +151,7 @@ mod tests {
     impl Player for Test1Player {
         fn take_action(&mut self, state: &GameEventParameter) -> Action {
             let color = state.turn;
-            let board = IndexBoard::new(
-                state.board,
-                state.depth,
-                state.last_action,
-                self.indexer.clone(),
-            );
+            let board = IndexBoard::new(state.board, state.depth, self.indexer.clone());
             let positions = board.get_movable_positions(&color);
 
             if positions.is_empty() {

@@ -9,7 +9,6 @@ use std::rc::Rc;
 pub struct IndexBoard {
     squares: Squares,
     depth: u32,
-    last_action: Option<Action>,
     indexer: Rc<Indexer>,
 }
 
@@ -22,19 +21,13 @@ impl IndexBoard {
         squares[position_to_index(&Position(3, 3))] = Square::White;
         squares[position_to_index(&Position(4, 4))] = Square::White;
 
-        IndexBoard::new(squares, 0, None, indexer)
+        IndexBoard::new(squares, 0, indexer)
     }
 
-    pub fn new(
-        squares: Squares,
-        depth: u32,
-        last_action: Option<Action>,
-        indexer: Rc<Indexer>,
-    ) -> IndexBoard {
+    pub fn new(squares: Squares, depth: u32, indexer: Rc<Indexer>) -> IndexBoard {
         IndexBoard {
             squares,
             depth,
-            last_action,
             indexer,
         }
     }
@@ -135,7 +128,6 @@ impl Board for IndexBoard {
                     Some(IndexBoard::new(
                         self.squares,
                         self.depth + 1,
-                        Some(*action),
                         self.indexer.clone(),
                     ))
                 } else {
@@ -225,7 +217,6 @@ impl Board for IndexBoard {
                 Some(IndexBoard::new(
                     squares,
                     self.depth + 1,
-                    Some(*action),
                     self.indexer.clone(),
                 ))
             }
@@ -267,10 +258,6 @@ impl Board for IndexBoard {
 
     fn depth(&self) -> u32 {
         self.depth
-    }
-
-    fn last_action(&self) -> Option<Action> {
-        self.last_action
     }
 }
 

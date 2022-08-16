@@ -199,7 +199,7 @@ pub fn search_game_tree<E>(
 where
     E: Evaluator,
 {
-    let board = BitBoard::new(*board, 0, None);
+    let board = BitBoard::new(*board, 0);
     let mut root = GameTreeNode::new(&board, color, None);
     let mut searched_nodes = 0;
     let (value, action) = root.search::<E>(search_type, depth, &mut searched_nodes);

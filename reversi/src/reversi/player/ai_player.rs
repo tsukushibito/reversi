@@ -20,7 +20,7 @@ impl AiPlayer {
 
 impl Player for AiPlayer {
     fn take_action(&mut self, state: &GameEventParameter) -> Action {
-        let board = BitBoard::new(state.board, state.depth, state.last_action);
+        let board = BitBoard::new(state.board, state.depth);
         let color = state.turn;
         let result = search_game_tree::<SimpleEvaluator>(
             board.squares(),
