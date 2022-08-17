@@ -8,6 +8,9 @@ use crate::Square;
 use crate::Squares;
 use crate::BOARD_SIZE;
 
+/// 方向
+/// 右下を正の向きとする(水平方向、垂直方向)
+/// (1, -1)は右上となる
 const DIRECTIONS: [(i32, i32); BOARD_SIZE] = [
     (-1, -1),
     (0, -1),
@@ -47,8 +50,8 @@ impl ArrayBoard {
             PlayerColor::Black => Square::Black,
             PlayerColor::White => Square::White,
         };
-        let mut r = pos.0 as i32 + dir.0;
-        let mut c = pos.1 as i32 + dir.1;
+        let mut r = pos.0 as i32 + dir.1;
+        let mut c = pos.1 as i32 + dir.0;
         loop {
             let target_pos = Position(r as usize, c as usize);
             if !is_valid_pos(&target_pos) {
@@ -59,8 +62,8 @@ impl ArrayBoard {
             if s == color || s == Square::Empty {
                 break;
             }
-            r += dir.0;
-            c += dir.1;
+            r += dir.1;
+            c += dir.0;
         }
 
         let target_pos = Position(r as usize, c as usize);
@@ -111,8 +114,8 @@ impl Board for ArrayBoard {
                         let flip = self.get_flip_count(&action.color, &position, &dir);
                         let mut pos = (position.0 as i32, position.1 as i32);
                         for _ in 0..flip {
-                            pos.0 += dir.0;
-                            pos.1 += dir.1;
+                            pos.0 += dir.1;
+                            pos.1 += dir.0;
                             let i = position_to_index(&Position(pos.0 as usize, pos.1 as usize));
                             squares[i] = square_color;
                         }
