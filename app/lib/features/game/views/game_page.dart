@@ -11,6 +11,20 @@ class GamePage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     var boardState = useState(reversi.Board.initial());
     var board = boardState.value;
+
+    var isPass =
+        !board.isGameOver() && board.getMovablePositions(board.turn()).isEmpty;
+
+    if (isPass) {
+      Future.delayed(const Duration(seconds: 3), () {
+        var next = board.applyAction(
+            reversi.Action(board.turn(), reversi.Position(0, 0), true));
+        if (next != null) {
+          boardState.value = next;
+        }
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reversi'),
@@ -31,7 +45,7 @@ class GamePage extends HookConsumerWidget {
                 board: board,
                 onTap: (row, col) {
                   debugPrint('r: $row, c: $col');
-                  _move(row, col, boardState);
+                  if (!isPass) _move(row, col, boardState);
                 },
               ),
             ),
@@ -60,18 +74,6 @@ class GamePage extends HookConsumerWidget {
     var next = board.applyAction(action);
     if (next != null) {
       boardState.value = next;
-      // パスかどうかチェック
-      if (next.getMovablePositions(next.turn()).isEmpty) {
-        // パスの場合は自動で進める
-        next = next.applyAction(reversi.Action(
-          next.turn(),
-          reversi.Position(0, 0),
-          true,
-        ));
-        if (next != null) {
-          boardState.value = next;
-        }
-      }
     }
   }
 }
