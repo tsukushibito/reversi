@@ -1,7 +1,6 @@
 import 'package:app/features/game/reversi.dart' as reversi;
 import 'package:app/features/game/views/board.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -10,7 +9,8 @@ class GamePage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var board = useState(reversi.Board.initial());
+    var boardState = useState(reversi.Board.initial());
+    var board = boardState.value;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reversi'),
@@ -18,28 +18,20 @@ class GamePage extends HookConsumerWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text('Black: ${board.blackCount()}'),
+              Text('White: ${board.whiteCount()}'),
+            ],
+          ),
           Expanded(
             child: Center(
               child: Board(
-                board: board.value,
+                board: board,
                 onTap: (row, col) {
                   debugPrint('r: $row, c: $col');
-                  var b = board.value;
-                  var action = reversi.Action(
-                      b.turn(), reversi.Position(row, col), false);
-                  var next = b.applyAction(action);
-                  if (next != null) {
-                    board.value = next;
-                    // パスかどうかチェック
-                    if (next.getMovablePositions(next.turn()).isEmpty) {
-                      // パパの場合は自動で進める
-                      next = next.applyAction(reversi.Action(
-                          next.turn(), reversi.Position(0, 0), true));
-                      if (next != null) {
-                        board.value = next;
-                      }
-                    }
-                  }
+                  _move(row, col, boardState);
                 },
               ),
             ),
@@ -49,7 +41,7 @@ class GamePage extends HookConsumerWidget {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  board.value = reversi.Board.initial();
+                  boardState.value = reversi.Board.initial();
                 },
                 child: const Text('Reset'),
               )
@@ -58,5 +50,28 @@ class GamePage extends HookConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _move(int row, int col, ValueNotifier<reversi.Board> boardState) {
+    var board = boardState.value;
+    if (board.isGameOver()) return;
+    var action =
+        reversi.Action(board.turn(), reversi.Position(row, col), false);
+    var next = board.applyAction(action);
+    if (next != null) {
+      boardState.value = next;
+      // パスかどうかチェック
+      if (next.getMovablePositions(next.turn()).isEmpty) {
+        // パスの場合は自動で進める
+        next = next.applyAction(reversi.Action(
+          next.turn(),
+          reversi.Position(0, 0),
+          true,
+        ));
+        if (next != null) {
+          boardState.value = next;
+        }
+      }
+    }
   }
 }
