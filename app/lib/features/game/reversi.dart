@@ -61,6 +61,8 @@ class Board {
   }
 
   Board? applyAction(Action action) {
+    if (action.color != turn()) return null;
+
     if (action.isPass) {
       var movables = getMovablePositions(action.color);
       if (movables.isEmpty) {
