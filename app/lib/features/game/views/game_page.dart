@@ -1,4 +1,5 @@
-import 'package:app/features/game/reversi.dart' as reversi;
+import 'package:app/features/game/models/reversi.dart' as r;
+import 'package:app/features/game/view_models/game_view_model.dart';
 import 'package:app/features/game/views/board.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -9,21 +10,11 @@ class GamePage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var boardState = useState(reversi.Board.initial());
-    var board = boardState.value;
-
-    var isPass =
-        !board.isGameOver() && board.getMovablePositions(board.turn()).isEmpty;
-
-    if (isPass) {
-      Future.delayed(const Duration(seconds: 3), () {
-        var next = board.applyAction(
-            reversi.Action(board.turn(), reversi.Position(0, 0), true));
-        if (next != null) {
-          boardState.value = next;
-        }
-      });
-    }
+    var viewModelState = useState(GameViewModel.init());
+    var viewModel = viewModelState.value;
+    viewModel.updateEvent.listen((event) {
+      viewModelState.value = event;
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -32,20 +23,23 @@ class GamePage extends HookConsumerWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
+          Center(
+            child: Text(viewModel.message),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Text('Black: ${board.blackCount()}'),
-              Text('White: ${board.whiteCount()}'),
+              Text(viewModel.blackCount),
+              Text(viewModel.whiteCount),
             ],
           ),
           Expanded(
             child: Center(
               child: Board(
-                board: board,
+                board: viewModel.squares,
                 onTap: (row, col) {
                   debugPrint('r: $row, c: $col');
-                  if (!isPass) _move(row, col, boardState);
+                  viewModel.receivePosition(r.Position(row, col));
                 },
               ),
             ),
@@ -55,7 +49,7 @@ class GamePage extends HookConsumerWidget {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  boardState.value = reversi.Board.initial();
+                  viewModel.reset();
                 },
                 child: const Text('Reset'),
               )
@@ -64,16 +58,5 @@ class GamePage extends HookConsumerWidget {
         ],
       ),
     );
-  }
-
-  void _move(int row, int col, ValueNotifier<reversi.Board> boardState) {
-    var board = boardState.value;
-    if (board.isGameOver()) return;
-    var action =
-        reversi.Action(board.turn(), reversi.Position(row, col), false);
-    var next = board.applyAction(action);
-    if (next != null) {
-      boardState.value = next;
-    }
   }
 }

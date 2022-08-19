@@ -1,9 +1,10 @@
-import 'package:app/features/game/reversi.dart' as reversi;
-import 'package:flutter/cupertino.dart';
+import 'dart:collection';
+
+import 'package:app/features/game/models/reversi.dart' as reversi;
 import 'package:flutter/material.dart';
 
 class Board extends StatelessWidget {
-  final reversi.Board? board;
+  final UnmodifiableListView<int> board;
   final void Function(int, int) onTap;
 
   const Board({
@@ -31,7 +32,7 @@ class Board extends StatelessWidget {
                   (col) {
                     var index =
                         reversi.positionToIndex(reversi.Position(row, col));
-                    var color = board?.squares[index] ?? reversi.empty;
+                    var color = board[index];
                     return Expanded(
                       child: _Cell(
                         row: row,
