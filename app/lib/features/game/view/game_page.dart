@@ -1,3 +1,4 @@
+import 'package:app/features/game/application/game_application.dart';
 import 'package:app/features/game/domain/reversi.dart' as r;
 import 'package:app/features/game/view_model/game_view_model.dart';
 import 'package:app/features/game/view/board.dart';
@@ -6,7 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 final _gameViewModelProvider =
     StateNotifierProvider<GameViewModel, GameViewModelState>(
-        (ref) => GameViewModel(r.Board.initial()));
+        (ref) => GameViewModel(GameApplication()));
 
 class GamePage extends HookConsumerWidget {
   const GamePage({Key? key}) : super(key: key);
