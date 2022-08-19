@@ -1,15 +1,17 @@
 import 'dart:collection';
 
-import 'package:app/features/game/domain/reversi.dart' as reversi;
+import 'package:app/features/game/domain/reversi.dart' as r;
 import 'package:flutter/material.dart';
 
 class Board extends StatelessWidget {
   final UnmodifiableListView<int> board;
+  final List<r.Position> movables;
   final void Function(int, int) onTap;
 
   const Board({
     super.key,
     required this.board,
+    required this.movables,
     required this.onTap,
   });
 
@@ -23,21 +25,23 @@ class Board extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            reversi.boardSize,
+            r.boardSize,
             (row) => Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  reversi.boardSize,
+                  r.boardSize,
                   (col) {
-                    var index =
-                        reversi.positionToIndex(reversi.Position(row, col));
+                    var index = r.positionToIndex(r.Position(row, col));
                     var color = board[index];
+                    var movable =
+                        movables.any((m) => m.row == row && m.col == col);
                     return Expanded(
                       child: _Cell(
                         row: row,
                         col: col,
                         color: color,
+                        movable: movable,
                         onTap: onTap,
                       ),
                     );
@@ -56,6 +60,7 @@ class _Cell extends StatelessWidget {
   final int row;
   final int col;
   final int color;
+  final bool movable;
   final void Function(int, int) onTap;
 
   const _Cell({
@@ -63,6 +68,7 @@ class _Cell extends StatelessWidget {
     required this.row,
     required this.col,
     required this.color,
+    required this.movable,
     required this.onTap,
   });
 
@@ -72,17 +78,17 @@ class _Cell extends StatelessWidget {
       onTap: () => onTap(row, col),
       child: Container(
         alignment: Alignment.center,
-        color: Colors.green,
+        color: movable ? Colors.greenAccent : Colors.green,
         margin: const EdgeInsets.all(1.0),
         padding: const EdgeInsets.all(5),
-        child: color == reversi.black
+        child: color == r.black
             ? Container(
                 decoration: const BoxDecoration(
                   color: Colors.black,
                   shape: BoxShape.circle,
                 ),
               )
-            : color == reversi.white
+            : color == r.white
                 ? Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,

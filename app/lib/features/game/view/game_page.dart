@@ -37,6 +37,7 @@ class GamePage extends HookConsumerWidget {
             child: Center(
               child: Board(
                 board: state.squares,
+                movables: state.movables,
                 onTap: (row, col) {
                   debugPrint('r: $row, c: $col');
                   ref
