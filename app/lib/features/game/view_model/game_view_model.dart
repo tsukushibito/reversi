@@ -18,12 +18,24 @@ class GameViewModelState {
     required this.message,
     required this.movables,
   });
+
+  factory GameViewModelState.init() {
+    var board = r.Board.initial();
+    return GameViewModelState(
+        squares: board.squares,
+        blackCount: '',
+        whiteCount: '',
+        message: '',
+        movables: []);
+  }
 }
 
 class GameViewModel extends StateNotifier<GameViewModelState> {
   GameViewModel(r.Board board)
       : _board = board,
-        super(_createState(board));
+        super(GameViewModelState.init()) {
+    state = _createState();
+  }
 
   r.Board _board;
 
@@ -33,7 +45,7 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     var next = _board.applyAction(action);
     if (next == null) return;
     _board = next;
-    state = _createState(next);
+    state = _createState();
 
     // パスの場合は2秒後に自動で進める
     if (!_board.isGameOver() &&
@@ -46,22 +58,22 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
         }
 
         _board = nextnext;
-        state = _createState(nextnext);
+        state = _createState();
       });
     }
   }
 
   void reset() {
     _board = r.Board.initial();
-    state = _createState(_board);
+    state = _createState();
   }
 
-  static GameViewModelState _createState(r.Board board) {
-    final UnmodifiableListView<int> squares = board.squares;
-    final String blackCount = 'Black: ${board.blackCount()}';
-    final String whiteCount = 'White: ${board.whiteCount()}';
-    final String message = _createMessage(board);
-    final List<r.Position> movables = board.getMovablePositions(board.turn());
+  GameViewModelState _createState() {
+    final UnmodifiableListView<int> squares = _board.squares;
+    final String blackCount = 'Black: ${_board.blackCount()}';
+    final String whiteCount = 'White: ${_board.whiteCount()}';
+    final String message = _createMessage();
+    final List<r.Position> movables = _board.getMovablePositions(_board.turn());
     return GameViewModelState(
       squares: squares,
       blackCount: blackCount,
@@ -71,20 +83,20 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     );
   }
 
-  static String _createMessage(r.Board board) {
-    if (board.isGameOver()) {
-      if (board.blackCount() > board.whiteCount()) {
+  String _createMessage() {
+    if (_board.isGameOver()) {
+      if (_board.blackCount() > _board.whiteCount()) {
         return 'Black wins!';
-      } else if (board.blackCount() < board.whiteCount()) {
+      } else if (_board.blackCount() < _board.whiteCount()) {
         return 'White wins!';
       } else {
         return 'Draw';
       }
     } else {
-      if (board.getMovablePositions(board.turn()).isEmpty) {
+      if (_board.getMovablePositions(_board.turn()).isEmpty) {
         return 'Pass';
       } else {
-        return 'Turn: ${board.turn() == r.black ? 'Black' : 'White'}';
+        return 'Turn: ${_board.turn() == r.black ? 'Black' : 'White'}';
       }
     }
   }
