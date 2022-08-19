@@ -1,20 +1,19 @@
-import 'package:app/features/game/models/reversi.dart' as r;
-import 'package:app/features/game/view_models/game_view_model.dart';
-import 'package:app/features/game/views/board.dart';
+import 'package:app/features/game/domain/reversi.dart' as r;
+import 'package:app/features/game/view_model/game_view_model.dart';
+import 'package:app/features/game/view/board.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+final _gameViewModelProvider =
+    StateNotifierProvider<GameViewModel, GameViewModelState>(
+        (ref) => GameViewModel(r.Board.initial()));
 
 class GamePage extends HookConsumerWidget {
   const GamePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var viewModelState = useState(GameViewModel.init());
-    var viewModel = viewModelState.value;
-    viewModel.updateEvent.listen((event) {
-      viewModelState.value = event;
-    });
+    var state = ref.watch(_gameViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -24,22 +23,24 @@ class GamePage extends HookConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Center(
-            child: Text(viewModel.message),
+            child: Text(state.message),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Text(viewModel.blackCount),
-              Text(viewModel.whiteCount),
+              Text(state.blackCount),
+              Text(state.whiteCount),
             ],
           ),
           Expanded(
             child: Center(
               child: Board(
-                board: viewModel.squares,
+                board: state.squares,
                 onTap: (row, col) {
                   debugPrint('r: $row, c: $col');
-                  viewModel.receivePosition(r.Position(row, col));
+                  ref
+                      .read(_gameViewModelProvider.notifier)
+                      .receivePosition(r.Position(row, col));
                 },
               ),
             ),
@@ -49,7 +50,7 @@ class GamePage extends HookConsumerWidget {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  viewModel.reset();
+                  ref.read(_gameViewModelProvider.notifier).reset();
                 },
                 child: const Text('Reset'),
               )

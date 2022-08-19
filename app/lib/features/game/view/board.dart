@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import 'package:app/features/game/models/reversi.dart' as reversi;
+import 'package:app/features/game/domain/reversi.dart' as reversi;
 import 'package:flutter/material.dart';
 
 class Board extends StatelessWidget {

@@ -1,4 +1,4 @@
-import 'package:app/features/game/views/game_page.dart';
+import 'package:app/features/game/view/game_page.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 

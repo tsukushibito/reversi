@@ -1,4 +1,4 @@
-import 'package:app/features/game/models/reversi.dart';
+import 'package:app/features/game/domain/reversi.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
