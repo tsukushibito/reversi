@@ -164,12 +164,14 @@ pub struct BitBoard {
 
 impl BitBoard {
     /// Creates a new [`BitBoard`].
-    pub fn new(squares: Squares, depth: u32) -> Self {
-        let (black, white) = squares_to_data(&squares);
+    pub fn new(squares: &Squares, depth: u32) -> Self {
+        let (black, white) = squares_to_data(squares);
+        let mut ss: Squares = [Square::Empty; BOARD_SIZE * BOARD_SIZE];
+        ss.clone_from_slice(squares);
         Self {
             black,
             white,
-            squares,
+            squares: ss,
             depth,
         }
     }
@@ -191,7 +193,7 @@ impl BitBoard {
         squares[position_to_index(&Position(3, 3))] = Square::White;
         squares[position_to_index(&Position(4, 4))] = Square::White;
 
-        Self::new(squares, 0)
+        Self::new(&squares, 0)
     }
 }
 
