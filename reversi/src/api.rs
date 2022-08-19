@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[allow(dead_code)]
-struct Action {
+pub struct Action {
     pub color: i32,
     pub row: i32,
     pub col: i32,
@@ -15,13 +15,13 @@ struct Action {
 }
 
 #[allow(dead_code)]
-struct SearchResult {
+pub struct SearchResult {
     pub value: i32,
     pub action: Box<Action>,
 }
 
 #[allow(dead_code)]
-fn search_game_tree(
+pub fn search_game_tree(
     squares: Vec<i32>,
     turn_depth: i32,
     color: i32,
