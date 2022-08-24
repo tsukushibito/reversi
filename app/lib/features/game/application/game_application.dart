@@ -71,7 +71,7 @@ class GameApplication {
         squares: squares,
         turnDepth: _board.depth,
         color: _board.turn(),
-        searchDepth: 9,
+        searchDepth: 7,
       );
 
       var action = r.Action(
