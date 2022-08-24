@@ -1,0 +1,6 @@
+version: '3'
+services:
+  pytorch:
+    image: pytorch/pytorch
+    volumes:
+      - ./reversi_ai/work:/work
