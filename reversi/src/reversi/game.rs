@@ -50,6 +50,7 @@ where
     black_player: Box<dyn Player>,
     white_player: Box<dyn Player>,
     board_history: Vec<Rc<T>>,
+    game_record: Vec<Action>,
     event_handler: Option<Box<dyn GameEventHandler>>,
 }
 
@@ -57,6 +58,10 @@ impl<T> Game<T>
 where
     T: Board,
 {
+    pub fn game_record(&self) -> &Vec<Action> {
+        &self.game_record
+    }
+
     pub fn new(
         initial_board: Rc<T>,
         black_player: Box<dyn Player>,
@@ -69,6 +74,7 @@ where
             black_player,
             white_player,
             board_history: Default::default(),
+            game_record: Default::default(),
             event_handler,
         }
     }
@@ -105,8 +111,8 @@ where
             }
 
             if let Some(next_board) = self.board.apply_action(&action) {
-                self.last_action = Some(action);
                 self.board_history.push(self.board.clone());
+                self.game_record.push(action);
                 self.board = Rc::new(next_board);
 
                 if self.board.is_game_over() {
