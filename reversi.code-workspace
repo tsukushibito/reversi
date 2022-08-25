@@ -11,7 +11,7 @@
 			"path": "app"
 		},
 		{
-			"path": "reversi_ai"
+			"path": "ml"
 		}
 	],
 	"settings": {
