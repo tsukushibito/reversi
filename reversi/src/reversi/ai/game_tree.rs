@@ -89,7 +89,8 @@ where
         self.children.clear();
         *searched_nodes += 1;
         if self.is_leaf(depth) {
-            self.value = E::evaluate(self.board.squares(), &self.player_color)
+            let result = E::evaluate(self.board.squares(), &self.player_color);
+            self.value = result.value;
         } else {
             let positions = self.board.get_movable_positions(&self.player_color);
             if !positions.is_empty() {
@@ -146,7 +147,8 @@ where
     {
         *searched_nodes += 1;
         if self.is_leaf(depth) {
-            self.value = E::evaluate(self.board.squares(), &self.player_color);
+            let result = E::evaluate(self.board.squares(), &self.player_color);
+            self.value = result.value;
         } else {
             let positions = self.board.get_movable_positions(&self.player_color);
             if !positions.is_empty() {
@@ -184,6 +186,7 @@ where
     }
 }
 
+#[derive(Debug)]
 pub struct SearchResult {
     pub value: i32,
     pub action: Option<Action>,

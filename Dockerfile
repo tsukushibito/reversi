@@ -2,7 +2,7 @@ FROM rust
 RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get install -y --no-install-recommends \
-    zsh python3.9 python3-pip
+    zsh python3.9 python3-pip libclang-dev
 
 ARG USER_NAME=reversi
 ARG USER_ID=1000
