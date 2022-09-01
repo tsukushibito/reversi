@@ -19,4 +19,5 @@ WORKDIR ${HOME}
 RUN rustup component add rustfmt
 RUN rustup component add clippy
 
-RUN pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+COPY install_tf.sh ./install_tf.sh
+RUN ./install_tf.sh
