@@ -1,4 +1,4 @@
-use crate::game::GameEventParameter;
+use crate::game::GameState;
 use crate::player::Player;
 use crate::reversi::common::*;
 
@@ -17,22 +17,9 @@ impl Default for ConsoleIoPlayer {
 }
 
 impl Player for ConsoleIoPlayer {
-    fn take_action(&mut self, state: &GameEventParameter) -> Action {
+    fn take_action(&self, state: &GameState) -> Action {
         println!("[{}]", state.depth);
-        println!("   a b c d e f g h");
-        println!("   ----------------");
-        for r in 0..BOARD_SIZE {
-            let mut row_string = (r + 1).to_string() + "|";
-            let index = r * BOARD_SIZE;
-            for square in &state.board[index..index + BOARD_SIZE] {
-                row_string += match square {
-                    Square::Empty => " .",
-                    Square::Black => " b",
-                    Square::White => " w",
-                }
-            }
-            println!("{}", row_string);
-        }
+        println!("{}", squares_to_string(&state.board));
         println!("Please input move position.");
 
         let color = state.turn;

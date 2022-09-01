@@ -45,4 +45,10 @@ pub trait Board {
             PlayerColor::White
         }
     }
+
+    fn to_console_text(&self) -> String {
+        let mut text = format!("[{}]\n", self.depth());
+        text += &squares_to_string(self.squares());
+        text
+    }
 }

@@ -1,27 +1,18 @@
 use crate::board::Board;
 use crate::player::Player;
 use crate::{Action, PlayerColor, Squares};
-use std::rc::Rc;
 
-pub enum GameEvent {
-    Started,
-    TurnStarted,
-    TurnEnded,
-    GameOver,
-}
-
-pub struct GameEventParameter {
+pub struct GameState {
     pub board: Squares,
     pub depth: u32,
     pub black_count: u32,
     pub white_count: u32,
     pub is_end: bool,
     pub turn: PlayerColor,
-    pub last_action: Option<Action>,
 }
 
-impl GameEventParameter {
-    pub fn new<T>(board: &T, last_action: Option<Action>) -> Self
+impl GameState {
+    pub fn new<T>(board: &T) -> Self
     where
         T: Board,
     {
@@ -32,132 +23,71 @@ impl GameEventParameter {
             white_count: board.white_count(),
             is_end: board.is_game_over(),
             turn: board.turn(),
-            last_action,
         }
     }
 }
 
-pub trait GameEventHandler {
-    fn handle(&self, event: GameEvent, param: &GameEventParameter);
-}
-
-pub struct Game<T>
+pub struct GameResult<T>
 where
     T: Board,
 {
-    board: Rc<T>,
-    last_action: Option<Action>,
+    pub state: GameState,
+    pub history: Vec<T>,
+    pub game_record: Vec<Action>,
+}
+
+pub fn play_game<T>(
+    initial_board: &T,
     black_player: Box<dyn Player>,
     white_player: Box<dyn Player>,
-    board_history: Vec<Rc<T>>,
-    game_record: Vec<Action>,
-    event_handler: Option<Box<dyn GameEventHandler>>,
-}
-
-impl<T> Game<T>
+) -> GameResult<T>
 where
     T: Board,
 {
-    pub fn game_record(&self) -> &Vec<Action> {
-        &self.game_record
+    let mut board = initial_board.duplicate();
+    let mut board_history: Vec<T> = Default::default();
+    let mut game_record: Vec<Action> = Default::default();
+
+    loop {
+        let action = if board.turn() == PlayerColor::Black {
+            black_player.take_action(&GameState::new(&board))
+        } else {
+            white_player.take_action(&GameState::new(&board))
+        };
+
+        if let Some(next_board) = board.apply_action(&action) {
+            board_history.push(board.duplicate());
+            game_record.push(action);
+            board = next_board;
+
+            if board.is_game_over() {
+                break;
+            }
+        }
     }
 
-    pub fn new(
-        initial_board: Rc<T>,
-        black_player: Box<dyn Player>,
-        white_player: Box<dyn Player>,
-        event_handler: Option<Box<dyn GameEventHandler>>,
-    ) -> Game<T> {
-        Game {
-            board: initial_board,
-            last_action: None,
-            black_player,
-            white_player,
-            board_history: Default::default(),
-            game_record: Default::default(),
-            event_handler,
-        }
-    }
-
-    pub fn run(&mut self) {
-        if let Some(event_handler) = &self.event_handler {
-            event_handler.handle(
-                GameEvent::Started,
-                &GameEventParameter::new(&(*self.board), self.last_action),
-            );
-        }
-
-        loop {
-            if let Some(event_handler) = &self.event_handler {
-                event_handler.handle(
-                    GameEvent::TurnStarted,
-                    &GameEventParameter::new(&(*self.board), self.last_action),
-                );
-            }
-
-            let action = if self.board.turn() == PlayerColor::Black {
-                self.black_player
-                    .take_action(&GameEventParameter::new(&(*self.board), self.last_action))
-            } else {
-                self.white_player
-                    .take_action(&GameEventParameter::new(&(*self.board), self.last_action))
-            };
-
-            if let Some(event_handler) = &self.event_handler {
-                event_handler.handle(
-                    GameEvent::TurnEnded,
-                    &GameEventParameter::new(&(*self.board), self.last_action),
-                );
-            }
-
-            if let Some(next_board) = self.board.apply_action(&action) {
-                self.board_history.push(self.board.clone());
-                self.game_record.push(action);
-                self.board = Rc::new(next_board);
-
-                if self.board.is_game_over() {
-                    break;
-                }
-            }
-        }
-
-        if let Some(event_handler) = &self.event_handler {
-            event_handler.handle(
-                GameEvent::GameOver,
-                &GameEventParameter::new(&(*self.board), self.last_action),
-            );
-        }
+    GameResult {
+        state: GameState::new(&board),
+        history: board_history,
+        game_record,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::board::ArrayBoard;
-    use crate::board::IndexBoard;
-    use crate::board::Indexer;
+    use crate::board::BitBoard;
     use crate::Action;
     use crate::ActionType;
     use crate::Position;
-    use std::rc::Rc;
-
-    struct Test1Player {
-        indexer: Rc<Indexer>,
-    }
 
     /// 左上優先で置けるところに置いていくプレイヤー
-    impl Test1Player {
-        fn new() -> Test1Player {
-            Test1Player {
-                indexer: Rc::new(Indexer::new()),
-            }
-        }
-    }
+    struct Test1Player();
 
     impl Player for Test1Player {
-        fn take_action(&mut self, state: &GameEventParameter) -> Action {
+        fn take_action(&self, state: &GameState) -> Action {
             let color = state.turn;
-            let board = IndexBoard::new(state.board, state.depth, self.indexer.clone());
+            let board = BitBoard::new(&state.board, state.depth);
             let positions = board.get_movable_positions(&color);
 
             if positions.is_empty() {
@@ -178,7 +108,7 @@ mod tests {
     }
 
     impl Player for Test2Player {
-        fn take_action(&mut self, state: &GameEventParameter) -> Action {
+        fn take_action(&self, state: &GameState) -> Action {
             let color = state.turn;
             match state.depth {
                 0 => Action::new(color, ActionType::Move(Position(4, 5))),
@@ -197,58 +127,27 @@ mod tests {
     }
 
     #[test]
-    fn test_index_board_run() {
+    fn test_play_game() {
         {
-            let indexer = Rc::new(Indexer::new());
-            let board = Rc::new(IndexBoard::new_initial(indexer));
-            let black = Box::new(Test1Player::new());
-            let white = Box::new(Test1Player::new());
-            let mut reversi = Game::new(board, black, white, None);
-            reversi.run();
+            let board = BitBoard::new_initial();
+            let black = Box::new(Test1Player {});
+            let white = Box::new(Test1Player {});
+            let result = play_game(&board, black, white);
 
-            assert_eq!(64, reversi.board.depth());
-            assert_eq!(19, reversi.board.black_count());
-            assert_eq!(45, reversi.board.white_count());
+            assert_eq!(64, result.state.depth);
+            assert_eq!(19, result.state.black_count);
+            assert_eq!(45, result.state.white_count);
         }
 
         {
-            let indexer = Rc::new(Indexer::new());
-            let board = Rc::new(IndexBoard::new_initial(indexer));
+            let board = BitBoard::new_initial();
             let black = Box::new(Test2Player::new());
             let white = Box::new(Test2Player::new());
-            let mut reversi = Game::new(board, black, white, None);
-            reversi.run();
+            let result = play_game(&board, black, white);
 
-            assert_eq!(10, reversi.board.depth());
-            assert_eq!(0, reversi.board.black_count());
-            assert_eq!(14, reversi.board.white_count());
-        }
-    }
-
-    #[test]
-    fn test_array_board_run() {
-        {
-            let board = Rc::new(ArrayBoard::new_initial());
-            let black = Box::new(Test1Player::new());
-            let white = Box::new(Test1Player::new());
-            let mut reversi = Game::new(board, black, white, None);
-            reversi.run();
-
-            assert_eq!(64, reversi.board.depth());
-            assert_eq!(19, reversi.board.black_count());
-            assert_eq!(45, reversi.board.white_count());
-        }
-
-        {
-            let board = Rc::new(ArrayBoard::new_initial());
-            let black = Box::new(Test2Player::new());
-            let white = Box::new(Test2Player::new());
-            let mut reversi = Game::new(board, black, white, None);
-            reversi.run();
-
-            assert_eq!(10, reversi.board.depth());
-            assert_eq!(0, reversi.board.black_count());
-            assert_eq!(14, reversi.board.white_count());
+            assert_eq!(10, result.state.depth);
+            assert_eq!(0, result.state.black_count);
+            assert_eq!(14, result.state.white_count);
         }
     }
 }

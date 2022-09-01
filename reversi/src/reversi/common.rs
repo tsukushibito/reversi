@@ -64,3 +64,22 @@ impl Action {
         Action { color, action }
     }
 }
+
+pub fn squares_to_string(squares: &Squares) -> String {
+    let mut text = String::from("   a b c d e f g h\n");
+    text += "   ----------------\n";
+    for r in 0..BOARD_SIZE {
+        let mut row_string = (r + 1).to_string() + "|";
+        let index = r * BOARD_SIZE;
+        for square in &squares[index..index + BOARD_SIZE] {
+            row_string += match square {
+                Square::Empty => " .",
+                Square::Black => " b",
+                Square::White => " w",
+            }
+        }
+        row_string += "\n";
+        text += &row_string;
+    }
+    text
+}
