@@ -19,5 +19,6 @@ WORKDIR ${HOME}
 RUN rustup component add rustfmt
 RUN rustup component add clippy
 
-COPY install_tf.sh ./install_tf.sh
+COPY --chown=${GROUP_ID}:${USER_ID} install_tf.sh ./install_tf.sh
+RUN chmod 755 install_tf.sh
 RUN ./install_tf.sh
