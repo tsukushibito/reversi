@@ -29,8 +29,6 @@ impl Player for AiPlayer {
             self.search_depth,
         );
 
-        result
-            .action
-            .unwrap_or_else(|| Action::new(color, ActionType::Pass))
+        result.action
     }
 }

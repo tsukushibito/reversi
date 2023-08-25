@@ -51,7 +51,7 @@ pub fn search_game_tree(
     );
 
     let value = result.value;
-    let act = result.action.unwrap();
+    let act = result.action;
     let mut row = 0;
     let mut col = 0;
     let mut is_pass = false;

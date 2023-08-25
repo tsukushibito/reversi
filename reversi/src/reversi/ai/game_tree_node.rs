@@ -26,22 +26,24 @@ pub struct SearchResult {
 }
 
 pub trait SearchFunction {
-    fn search<N, E>(node: &mut N, depth: usize) -> SearchResult
+    fn search<N, E>(node: &mut N, depth: usize, eval: &E) -> (i32, Action)
     where
         N: GameTreeNode,
         E: EvaluationFunction;
 }
 
 pub trait GameTreeNode {
-    type Board: Board;
-    type Node: GameTreeNode<Board = Self::Board>;
+    type B: Board;
+    fn new(board: Self::B, color: PlayerColor) -> Self;
 
-    fn new(board: Self::Board, color: PlayerColor) -> Self;
-
-    fn board(&self) -> &Self::Board;
+    fn board(&self) -> &Self::B;
     fn color(&self) -> &PlayerColor;
-    fn children(&self) -> &[Self::Node];
-    fn children_mut(&mut self) -> &mut Vec<Self::Node>;
+    fn children(&self) -> &[Self]
+    where
+        Self: Sized;
+    fn children_mut(&mut self) -> &mut Vec<Self>
+    where
+        Self: Sized;
     fn value(&self) -> i32;
     fn action(&self) -> Action;
 
@@ -49,13 +51,15 @@ pub trait GameTreeNode {
         self.board().is_game_over()
     }
 
-    fn expand(&mut self, actions: &[Action]) {
+    fn expand(&mut self, actions: &[Action])
+    where
+        Self: Sized,
+    {
         // 展開
         for act in actions {
             let next = self.board().apply_action(act).unwrap();
             let opponent_color = self.color().opponent();
-            self.children_mut()
-                .push(Self::Node::new(next, opponent_color));
+            self.children_mut().push(Self::new(next, opponent_color));
         }
     }
 }
@@ -70,10 +74,9 @@ pub struct GameTreeNodeImpl {
 }
 
 impl GameTreeNode for GameTreeNodeImpl {
-    type Board = BitBoard;
-    type Node = GameTreeNodeImpl;
+    type B = BitBoard;
 
-    fn new(board: Self::Board, color: PlayerColor) -> Self {
+    fn new(board: BitBoard, color: PlayerColor) -> Self {
         Self {
             board,
             color,
@@ -83,7 +86,7 @@ impl GameTreeNode for GameTreeNodeImpl {
         }
     }
 
-    fn board(&self) -> &Self::Board {
+    fn board(&self) -> &BitBoard {
         &self.board
     }
 
@@ -91,11 +94,11 @@ impl GameTreeNode for GameTreeNodeImpl {
         &self.color
     }
 
-    fn children(&self) -> &[Self::Node] {
+    fn children(&self) -> &[Self] {
         &self.children
     }
 
-    fn children_mut(&mut self) -> &mut Vec<Self::Node> {
+    fn children_mut(&mut self) -> &mut Vec<Self> {
         &mut self.children
     }
 
