@@ -8,11 +8,8 @@ edition = "2018"
 [lib]
 crate-type = ["lib", "cdylib", "staticlib"]
 
-[dependencies]
-flutter_rust_bridge = "1"
-
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.5.1"
 
 [[example]]
 name = "example"

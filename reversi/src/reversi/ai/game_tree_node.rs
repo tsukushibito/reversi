@@ -4,8 +4,109 @@ use crate::Action;
 use crate::ActionType;
 use crate::PlayerColor;
 use crate::Squares;
+use crate::BOARD_SIZE;
 
 use super::Evaluator;
+
+#[derive(Debug)]
+pub struct EvaluationResult {
+    pub value: i32,
+    pub policy: [i32; BOARD_SIZE * BOARD_SIZE],
+}
+
+pub trait EvaluationFunction {
+    fn evaluate(board: &Squares, color: &PlayerColor) -> (i32, Action);
+}
+
+#[derive(Debug)]
+pub struct SearchResult {
+    pub value: i32,
+    pub action: Action,
+    pub searched_nodes: usize,
+}
+
+pub trait SearchFunction {
+    fn search<N, E>(node: &mut N, depth: usize) -> SearchResult
+    where
+        N: GameTreeNode,
+        E: EvaluationFunction;
+}
+
+pub trait GameTreeNode {
+    type Board: Board;
+    type Node: GameTreeNode<Board = Self::Board>;
+
+    fn new(board: Self::Board, color: PlayerColor) -> Self;
+
+    fn board(&self) -> &Self::Board;
+    fn color(&self) -> &PlayerColor;
+    fn children(&self) -> &[Self::Node];
+    fn children_mut(&mut self) -> &mut Vec<Self::Node>;
+    fn value(&self) -> i32;
+    fn action(&self) -> Action;
+
+    fn is_leaf(&self) -> bool {
+        self.board().is_game_over()
+    }
+
+    fn expand(&mut self, actions: &[Action]) {
+        // 展開
+        for act in actions {
+            let next = self.board().apply_action(act).unwrap();
+            let opponent_color = self.color().opponent();
+            self.children_mut()
+                .push(Self::Node::new(next, opponent_color));
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct GameTreeNodeImpl {
+    board: BitBoard,
+    color: PlayerColor,
+    value: i32,
+    action: Action,
+    children: Vec<GameTreeNodeImpl>,
+}
+
+impl GameTreeNode for GameTreeNodeImpl {
+    type Board = BitBoard;
+    type Node = GameTreeNodeImpl;
+
+    fn new(board: Self::Board, color: PlayerColor) -> Self {
+        Self {
+            board,
+            color,
+            value: 0,
+            action: Action::new(color, ActionType::Pass),
+            children: Default::default(),
+        }
+    }
+
+    fn board(&self) -> &Self::Board {
+        &self.board
+    }
+
+    fn color(&self) -> &PlayerColor {
+        &self.color
+    }
+
+    fn children(&self) -> &[Self::Node] {
+        &self.children
+    }
+
+    fn children_mut(&mut self) -> &mut Vec<Self::Node> {
+        &mut self.children
+    }
+
+    fn value(&self) -> i32 {
+        self.value
+    }
+
+    fn action(&self) -> Action {
+        self.action
+    }
+}
 
 #[derive(Debug)]
 pub enum SearchType {
@@ -14,20 +115,20 @@ pub enum SearchType {
 }
 
 #[derive(Debug)]
-struct GameTreeNode<T> {
+struct GameTreeNodeOld<T> {
     board: T,
     player_color: PlayerColor,
     value: i32,
     action: Option<Action>,
-    children: Vec<GameTreeNode<T>>,
+    children: Vec<GameTreeNodeOld<T>>,
 }
 
-impl<T> GameTreeNode<T>
+impl<T> GameTreeNodeOld<T>
 where
     T: Board,
 {
-    pub fn new(board: &T, color: &PlayerColor, action: Option<Action>) -> GameTreeNode<T> {
-        GameTreeNode {
+    pub fn new(board: &T, color: &PlayerColor, action: Option<Action>) -> GameTreeNodeOld<T> {
+        GameTreeNodeOld {
             board: board.duplicate(),
             player_color: *color,
             value: 0,
@@ -61,7 +162,7 @@ where
         // 展開
         for act in actions {
             let next = self.board.apply_action(act);
-            self.children.push(GameTreeNode::new(
+            self.children.push(GameTreeNodeOld::new(
                 &next.unwrap(),
                 &self.player_color.opponent(),
                 None,
@@ -186,13 +287,6 @@ where
     }
 }
 
-#[derive(Debug)]
-pub struct SearchResult {
-    pub value: i32,
-    pub action: Option<Action>,
-    pub searched_nodes: usize,
-}
-
 pub fn search_game_tree<E>(
     board: &Squares,
     color: &PlayerColor,
@@ -203,12 +297,12 @@ where
     E: Evaluator,
 {
     let board = BitBoard::new(board, 0);
-    let mut root = GameTreeNode::new(&board, color, None);
+    let mut root = GameTreeNodeOld::new(&board, color, None);
     let mut searched_nodes = 0;
     let (value, action) = root.search::<E>(search_type, depth, &mut searched_nodes);
     SearchResult {
         value,
-        action,
+        action: action.unwrap(),
         searched_nodes,
     }
 }
@@ -230,7 +324,7 @@ mod tests {
     fn test_game_tree_negaalpha_search() {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer);
-        let mut node = GameTreeNode::new(&board, &PlayerColor::Black, None);
+        let mut node = GameTreeNodeOld::new(&board, &PlayerColor::Black, None);
 
         let mut searched_nodes: usize = 0;
         let value_action =
@@ -246,7 +340,7 @@ mod tests {
     fn test_game_tree_negamax_search() {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer);
-        let mut node = GameTreeNode::new(&board, &PlayerColor::Black, None);
+        let mut node = GameTreeNodeOld::new(&board, &PlayerColor::Black, None);
 
         let mut searched_nodes: usize = 0;
         let value_action =
@@ -269,7 +363,6 @@ mod tests {
             &SearchType::NegaMax,
             depth,
         );
-        assert!(nega_max_result.action != None);
         println!(
             "[NegaMax] depth: {},  searched_nodes: {}",
             depth, nega_max_result.searched_nodes
@@ -281,7 +374,6 @@ mod tests {
             &SearchType::NegaAlpha,
             depth,
         );
-        assert!(nega_alpha_result.action != None);
         println!(
             "[NegaAlpha] depth: {},  searched_nodes: {}",
             depth, nega_alpha_result.searched_nodes
