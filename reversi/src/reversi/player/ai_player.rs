@@ -1,5 +1,3 @@
-use crate::ai::search_game_tree;
-use crate::ai::SearchType;
 use crate::ai::SimpleEvaluator;
 use crate::board::BitBoard;
 use crate::board::Board;
@@ -20,15 +18,6 @@ impl AiPlayer {
 
 impl Player for AiPlayer {
     fn take_action(&self, state: &GameState) -> Action {
-        let board = BitBoard::new(&state.board, state.depth);
-        let color = state.turn;
-        let result = search_game_tree::<SimpleEvaluator>(
-            board.squares(),
-            &color,
-            &SearchType::NegaAlpha,
-            self.search_depth,
-        );
-
-        result.action
+        todo!()
     }
 }

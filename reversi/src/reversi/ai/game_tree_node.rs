@@ -4,18 +4,44 @@ use crate::Action;
 use crate::ActionType;
 use crate::PlayerColor;
 use crate::Squares;
-use crate::BOARD_SIZE;
 
 use super::Evaluator;
 
-#[derive(Debug)]
-pub struct EvaluationResult {
-    pub value: i32,
-    pub policy: [i32; BOARD_SIZE * BOARD_SIZE],
+pub struct Node {
+    pub board: BitBoard,
+    pub color: PlayerColor,
+    pub move_count: u8,
+    pub last_action: Action,
+    pub value: Option<i32>,
+    pub children: Vec<Node>,
 }
 
-pub trait EvaluationFunction {
-    fn evaluate(board: &Squares, color: &PlayerColor) -> (i32, Action);
+impl Node {
+    pub fn expand(&mut self) {
+        let positions = self.board.get_movable_positions(&self.color);
+        let actions = if positions.is_empty() {
+            vec![Action::new(self.color, ActionType::Pass)]
+        } else {
+            positions
+                .iter()
+                .map(|p| Action::new(self.color, ActionType::Move(*p)))
+                .collect::<Vec<_>>()
+        };
+        self.children = actions
+            .iter()
+            .map(|act| {
+                let next = self.board.apply_action(act).unwrap();
+                Node {
+                    board: next,
+                    color: self.color.opponent(),
+                    move_count: self.move_count + 1,
+                    last_action: *act,
+                    value: None,
+                    children: Default::default(),
+                }
+            })
+            .collect::<Vec<_>>();
+    }
 }
 
 #[derive(Debug)]
@@ -25,41 +51,35 @@ pub struct SearchResult {
     pub searched_nodes: usize,
 }
 
-pub trait SearchFunction {
-    fn search<N, E>(node: &mut N, depth: usize, eval: &E) -> (i32, Action)
-    where
-        N: GameTreeNode,
-        E: EvaluationFunction;
+pub trait State: Sized {
+    fn apply_action(&self, action: &Action) -> Option<Self>;
+    fn leagal_actions(&self) -> Vec<Action>;
+    fn next_states(&self) -> Vec<(Self, Action)> {
+        let actions = self.leagal_actions();
+        actions
+            .iter()
+            .map(|act| (self.apply_action(act).unwrap(), *act))
+            .collect::<Vec<_>>()
+    }
 }
 
-pub trait GameTreeNode {
-    type B: Board;
-    fn new(board: Self::B, color: PlayerColor) -> Self;
+pub trait GameTreeNode__: Sized {
+    type S: State;
+    fn new(state: Self::S) -> Self;
 
-    fn board(&self) -> &Self::B;
-    fn color(&self) -> &PlayerColor;
-    fn children(&self) -> &[Self]
-    where
-        Self: Sized;
-    fn children_mut(&mut self) -> &mut Vec<Self>
-    where
-        Self: Sized;
-    fn value(&self) -> i32;
-    fn action(&self) -> Action;
+    fn state(&self) -> &Self::S;
+    fn children(&self) -> &[(Self, Action)];
+    fn children_mut(&mut self) -> &mut Vec<(Self, Action)>;
+    fn value(&self) -> &Option<i32>;
+    fn action(&self) -> &Option<Action>;
+    fn is_leaf(&self) -> bool;
+    fn set_value(&mut self, value: i32);
+    fn set_action(&mut self, action: Action);
 
-    fn is_leaf(&self) -> bool {
-        self.board().is_game_over()
-    }
-
-    fn expand(&mut self, actions: &[Action])
-    where
-        Self: Sized,
-    {
-        // 展開
-        for act in actions {
-            let next = self.board().apply_action(act).unwrap();
-            let opponent_color = self.color().opponent();
-            self.children_mut().push(Self::new(next, opponent_color));
+    fn expand(&mut self) {
+        let next_states = self.state().next_states();
+        for (state, action) in next_states {
+            self.children_mut().push((Self::new(state), action));
         }
     }
 }
@@ -71,44 +91,6 @@ pub struct GameTreeNodeImpl {
     value: i32,
     action: Action,
     children: Vec<GameTreeNodeImpl>,
-}
-
-impl GameTreeNode for GameTreeNodeImpl {
-    type B = BitBoard;
-
-    fn new(board: BitBoard, color: PlayerColor) -> Self {
-        Self {
-            board,
-            color,
-            value: 0,
-            action: Action::new(color, ActionType::Pass),
-            children: Default::default(),
-        }
-    }
-
-    fn board(&self) -> &BitBoard {
-        &self.board
-    }
-
-    fn color(&self) -> &PlayerColor {
-        &self.color
-    }
-
-    fn children(&self) -> &[Self] {
-        &self.children
-    }
-
-    fn children_mut(&mut self) -> &mut Vec<Self> {
-        &mut self.children
-    }
-
-    fn value(&self) -> i32 {
-        self.value
-    }
-
-    fn action(&self) -> Action {
-        self.action
-    }
 }
 
 #[derive(Debug)]

@@ -7,12 +7,12 @@ fn nega_max(c: &mut Criterion) {
     c.bench_function("NegaMax", |b| {
         b.iter(|| {
             let board = BitBoard::new_initial();
-            let _result = ai::search_game_tree::<SimpleEvaluator>(
-                board.squares(),
-                &PlayerColor::Black,
-                &ai::SearchType::NegaMax,
-                7,
-            );
+            // let _result = ai::search_game_tree::<SimpleEvaluator>(
+            //     board.squares(),
+            //     &PlayerColor::Black,
+            //     &ai::SearchType::NegaMax,
+            //     7,
+            // );
             // println!("searched_nodes: {}", result.searched_nodes);
         })
     });
@@ -22,12 +22,12 @@ fn nega_alpha(c: &mut Criterion) {
     c.bench_function("NegaAlpha", |b| {
         b.iter(|| {
             let board = BitBoard::new_initial();
-            let _result = ai::search_game_tree::<SimpleEvaluator>(
-                board.squares(),
-                &PlayerColor::Black,
-                &ai::SearchType::NegaAlpha,
-                7,
-            );
+            // let _result = ai::search_game_tree::<SimpleEvaluator>(
+            //     board.squares(),
+            //     &PlayerColor::Black,
+            //     &ai::SearchType::NegaAlpha,
+            //     7,
+            // );
             // println!("searched_nodes: {}", result.searched_nodes);
         })
     });
