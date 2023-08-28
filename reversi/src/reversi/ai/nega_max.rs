@@ -3,6 +3,8 @@ use crate::{
     Action, ActionType, PlayerColor,
 };
 
+use super::node::Node;
+
 pub struct NegaMaxNode {
     pub board: BitBoard,
     pub color: PlayerColor,
@@ -31,30 +33,46 @@ impl NegaMaxNode {
             })
             .collect::<Vec<_>>();
     }
+}
 
-    pub fn node_count(&self) -> usize {
-        self.children
-            .iter()
-            .fold(1, |acc, child| acc + child.node_count())
+impl Node for NegaMaxNode {
+    fn children(&self) -> &[Self] {
+        &self.children
     }
 
-    pub fn candidate(&self) -> Option<Vec<Action>> {
-        if self.children.is_empty() {
-            None
-        } else {
-            let mut children = self
-                .children
-                .iter()
-                .map(|child| (child.value, child.last_action))
-                .collect::<Vec<_>>();
-            children.sort_by(|a, b| b.0.cmp(&a.0));
-            Some(
-                children
-                    .iter()
-                    .map(|(_, action)| *action)
-                    .collect::<Vec<_>>(),
-            )
-        }
+    fn children_mut(&mut self) -> &mut Vec<Self> {
+        &mut self.children
+    }
+
+    fn value(&self) -> &Option<i32> {
+        &self.value
+    }
+
+    fn value_mut(&mut self) -> &mut Option<i32> {
+        &mut self.value
+    }
+
+    fn last_action(&self) -> &Action {
+        &self.last_action
+    }
+
+    fn expand(&mut self) {
+        let positions = self.board.get_movable_positions(&self.color);
+        self.children = positions
+            .iter()
+            .map(|position| {
+                let action = Action::new(self.color, ActionType::Move(*position));
+                let next_board = self.board.apply_action(&action).unwrap();
+                NegaMaxNode {
+                    board: next_board,
+                    color: self.color.opponent(),
+                    move_count: self.move_count + 1,
+                    last_action: action,
+                    value: None,
+                    children: Vec::new(),
+                }
+            })
+            .collect::<Vec<_>>();
     }
 }
 

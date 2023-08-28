@@ -38,6 +38,13 @@ impl NegaAlphaNode {
             .fold(1, |acc, child| acc + child.node_count())
     }
 
+    pub fn searched_nodes(&self) -> usize {
+        self.children
+            .iter()
+            .filter(|child| child.value.is_some())
+            .fold(1, |acc, child| acc + child.searched_nodes())
+    }
+
     pub fn candidate(&self) -> Option<Vec<Action>> {
         if self.children.is_empty() {
             None
