@@ -93,7 +93,7 @@ where
         E: NegaAlphaEvaluationFunction,
     {
         if node.board.is_game_over() || depth == 0 {
-            let value = eval.evaluate(&node);
+            let value = eval.evaluate(node);
             node.value = Some(value);
             value
         } else {
@@ -102,11 +102,11 @@ where
             let mut alpha = alpha;
             for child in node.children_mut().iter_mut() {
                 let v = -Self::nega_alpha(child, depth - 1, -beta, -alpha, eval);
-                if alpha >= beta {
-                    break;
-                }
                 if v > alpha {
                     alpha = v;
+                }
+                if alpha >= beta {
+                    break;
                 }
             }
 
