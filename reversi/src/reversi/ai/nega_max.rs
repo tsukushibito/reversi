@@ -67,6 +67,10 @@ impl Node for NegaMaxNode {
         &mut self.children
     }
 
+    fn set_children(&mut self, children: Vec<Self>) {
+        self.children = children;
+    }
+
     fn value(&self) -> &Option<i32> {
         &self.value
     }
@@ -75,27 +79,8 @@ impl Node for NegaMaxNode {
         &mut self.value
     }
 
-    fn last_action(&self) -> &Move {
+    fn last_move(&self) -> &Move {
         &self.last_move
-    }
-
-    fn expand(&mut self) {
-        let positions = self.board.get_movable_positions(&self.color);
-        self.children = positions
-            .iter()
-            .map(|position| {
-                let action = Move::new_position(self.color, *position);
-                let next_board = self.board.apply_move(&action).unwrap();
-                NegaMaxNode {
-                    board: next_board,
-                    color: self.color.opponent(),
-                    move_count: self.move_count + 1,
-                    last_move: action,
-                    value: None,
-                    children: Vec::new(),
-                }
-            })
-            .collect::<Vec<_>>();
     }
 }
 
