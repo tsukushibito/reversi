@@ -3,8 +3,7 @@ use crate::board::BitBoard;
 use crate::board::Board;
 use crate::game::GameState;
 use crate::player::Player;
-use crate::Action;
-use crate::ActionType;
+use crate::Move;
 
 pub struct AiPlayer {
     search_depth: usize,
@@ -17,7 +16,7 @@ impl AiPlayer {
 }
 
 impl Player for AiPlayer {
-    fn take_action(&self, state: &GameState) -> Action {
+    fn take_action(&self, state: &GameState) -> Move {
         todo!()
     }
 }

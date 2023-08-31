@@ -1,13 +1,13 @@
 use crate::{
     board::{BitBoard, Board},
-    Action, ActionType, PlayerColor,
+    Move, PlayerColor,
 };
 
 pub struct NegaAlphaNode {
     pub board: BitBoard,
     pub color: PlayerColor,
     pub move_count: u8,
-    pub last_action: Action,
+    pub last_move: Move,
     pub value: Option<i32>,
     pub children: Vec<NegaAlphaNode>,
 }
@@ -18,13 +18,13 @@ impl NegaAlphaNode {
         self.children = positions
             .iter()
             .map(|position| {
-                let action = Action::new(self.color, ActionType::Move(*position));
-                let next_board = self.board.apply_action(&action).unwrap();
+                let action = Move::new_position(self.color, *position);
+                let next_board = self.board.apply_move(&action).unwrap();
                 NegaAlphaNode {
                     board: next_board,
                     color: self.color.opponent(),
                     move_count: self.move_count + 1,
-                    last_action: action,
+                    last_move: action,
                     value: None,
                     children: Vec::new(),
                 }
@@ -45,14 +45,14 @@ impl NegaAlphaNode {
             .fold(1, |acc, child| acc + child.searched_nodes())
     }
 
-    pub fn candidate(&self) -> Option<Vec<Action>> {
+    pub fn candidate(&self) -> Option<Vec<Move>> {
         if self.children.is_empty() {
             None
         } else {
             let mut children = self
                 .children
                 .iter()
-                .map(|child| (child.value, child.last_action))
+                .map(|child| (child.value, child.last_move))
                 .collect::<Vec<_>>();
             children.sort_by(|a, b| b.0.cmp(&a.0));
             Some(
@@ -113,7 +113,7 @@ where
 mod tests {
     use super::*;
     use crate::board::Board;
-    use crate::{ActionType, Square};
+    use crate::Square;
 
     struct TestEvaluationFunction {}
 
@@ -138,7 +138,7 @@ mod tests {
             board: BitBoard::new_initial(),
             color: PlayerColor::Black,
             move_count: 0,
-            last_action: Action::new(PlayerColor::White, ActionType::Pass),
+            last_move: Move::new_pass(PlayerColor::White),
             value: None,
             children: Vec::new(),
         };

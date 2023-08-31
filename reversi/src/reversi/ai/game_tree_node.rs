@@ -1,7 +1,6 @@
 use crate::board::BitBoard;
 use crate::board::Board;
-use crate::Action;
-use crate::ActionType;
+use crate::Move;
 use crate::PlayerColor;
 use crate::Squares;
 
@@ -11,7 +10,7 @@ pub struct Node {
     pub board: BitBoard,
     pub color: PlayerColor,
     pub move_count: u8,
-    pub last_action: Action,
+    pub last_move: Move,
     pub value: Option<i32>,
     pub children: Vec<Node>,
 }
@@ -20,22 +19,22 @@ impl Node {
     pub fn expand(&mut self) {
         let positions = self.board.get_movable_positions(&self.color);
         let actions = if positions.is_empty() {
-            vec![Action::new(self.color, ActionType::Pass)]
+            vec![Move::new_pass(self.color)]
         } else {
             positions
                 .iter()
-                .map(|p| Action::new(self.color, ActionType::Move(*p)))
+                .map(|p| Move::new_position(self.color, *p))
                 .collect::<Vec<_>>()
         };
         self.children = actions
             .iter()
             .map(|act| {
-                let next = self.board.apply_action(act).unwrap();
+                let next = self.board.apply_move(act).unwrap();
                 Node {
                     board: next,
                     color: self.color.opponent(),
                     move_count: self.move_count + 1,
-                    last_action: *act,
+                    last_move: *act,
                     value: None,
                     children: Default::default(),
                 }
@@ -47,14 +46,14 @@ impl Node {
 #[derive(Debug)]
 pub struct SearchResult {
     pub value: i32,
-    pub action: Action,
+    pub action: Move,
     pub searched_nodes: usize,
 }
 
 pub trait State: Sized {
-    fn apply_action(&self, action: &Action) -> Option<Self>;
-    fn leagal_actions(&self) -> Vec<Action>;
-    fn next_states(&self) -> Vec<(Self, Action)> {
+    fn apply_action(&self, action: &Move) -> Option<Self>;
+    fn leagal_actions(&self) -> Vec<Move>;
+    fn next_states(&self) -> Vec<(Self, Move)> {
         let actions = self.leagal_actions();
         actions
             .iter()
@@ -68,13 +67,13 @@ pub trait GameTreeNode__: Sized {
     fn new(state: Self::S) -> Self;
 
     fn state(&self) -> &Self::S;
-    fn children(&self) -> &[(Self, Action)];
-    fn children_mut(&mut self) -> &mut Vec<(Self, Action)>;
+    fn children(&self) -> &[(Self, Move)];
+    fn children_mut(&mut self) -> &mut Vec<(Self, Move)>;
     fn value(&self) -> &Option<i32>;
-    fn action(&self) -> &Option<Action>;
+    fn action(&self) -> &Option<Move>;
     fn is_leaf(&self) -> bool;
     fn set_value(&mut self, value: i32);
-    fn set_action(&mut self, action: Action);
+    fn set_action(&mut self, action: Move);
 
     fn expand(&mut self) {
         let next_states = self.state().next_states();
@@ -89,7 +88,7 @@ pub struct GameTreeNodeImpl {
     board: BitBoard,
     color: PlayerColor,
     value: i32,
-    action: Action,
+    action: Move,
     children: Vec<GameTreeNodeImpl>,
 }
 
@@ -104,7 +103,7 @@ struct GameTreeNodeOld<T> {
     board: T,
     player_color: PlayerColor,
     value: i32,
-    action: Option<Action>,
+    action: Option<Move>,
     children: Vec<GameTreeNodeOld<T>>,
 }
 
@@ -112,7 +111,7 @@ impl<T> GameTreeNodeOld<T>
 where
     T: Board,
 {
-    pub fn new(board: &T, color: &PlayerColor, action: Option<Action>) -> GameTreeNodeOld<T> {
+    pub fn new(board: &T, color: &PlayerColor, action: Option<Move>) -> GameTreeNodeOld<T> {
         GameTreeNodeOld {
             board: board.duplicate(),
             player_color: *color,
@@ -127,7 +126,7 @@ where
         search_type: &SearchType,
         depth: usize,
         searched_nodes: &mut usize,
-    ) -> (i32, Option<Action>)
+    ) -> (i32, Option<Move>)
     where
         E: Evaluator,
     {
@@ -143,10 +142,10 @@ where
         depth == 0 || self.board.is_game_over()
     }
 
-    fn expand(&mut self, actions: &[Action]) {
+    fn expand(&mut self, actions: &[Move]) {
         // 展開
         for act in actions {
-            let next = self.board.apply_action(act);
+            let next = self.board.apply_move(act);
             self.children.push(GameTreeNodeOld::new(
                 &next.unwrap(),
                 &self.player_color.opponent(),
@@ -167,7 +166,7 @@ where
         alpha: i32,
         beta: i32,
         searched_nodes: &mut usize,
-    ) -> (i32, Option<Action>)
+    ) -> (i32, Option<Move>)
     where
         // E: Fn(&Squares, &PlayerColor) -> i32,
         E: Evaluator,
@@ -182,7 +181,7 @@ where
             if !positions.is_empty() {
                 let actions = positions
                     .iter()
-                    .map(|p| Action::new(self.player_color, ActionType::Move(*p)))
+                    .map(|p| Move::new_position(self.player_color, *p))
                     .collect::<Vec<_>>();
 
                 self.expand(&actions);
@@ -207,7 +206,7 @@ where
                 self.action = Some(actions[index]);
             } else {
                 // パス時
-                let actions = vec![Action::new(self.player_color, ActionType::Pass)];
+                let actions = vec![Move::new_pass(self.player_color)];
                 self.expand(&actions);
 
                 // 評価
@@ -227,7 +226,7 @@ where
     /// alpha: α値
     /// beta: ベータ値
     /// return: (評価値, 次の手)
-    fn nega_max<E>(&mut self, depth: usize, searched_nodes: &mut usize) -> (i32, Option<Action>)
+    fn nega_max<E>(&mut self, depth: usize, searched_nodes: &mut usize) -> (i32, Option<Move>)
     where
         E: Evaluator,
     {
@@ -240,7 +239,7 @@ where
             if !positions.is_empty() {
                 let actions = positions
                     .iter()
-                    .map(|p| Action::new(self.player_color, ActionType::Move(*p)))
+                    .map(|p| Move::new_position(self.player_color, *p))
                     .collect::<Vec<_>>();
 
                 self.expand(&actions);
@@ -259,7 +258,7 @@ where
                 self.action = Some(actions[index]);
             } else {
                 // パス時
-                let actions = vec![Action::new(self.player_color, ActionType::Pass)];
+                let actions = vec![Move::new_pass(self.player_color)];
                 self.expand(&actions);
 
                 // 評価
@@ -299,8 +298,7 @@ mod tests {
     use crate::board::ArrayBoard;
     use crate::board::IndexBoard;
     use crate::board::Indexer;
-    use crate::Action;
-    use crate::ActionType;
+    use crate::Move;
     use crate::PlayerColor;
     use crate::Position;
     use std::rc::Rc;
@@ -317,7 +315,7 @@ mod tests {
 
         assert_eq!(value_action.0, -1);
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
+        let act = Move::new_position(PlayerColor::Black, Position(2, 3));
         assert_eq!(value_action.1.unwrap(), act);
     }
 
@@ -333,7 +331,7 @@ mod tests {
 
         assert_eq!(value_action.0, -1);
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
+        let act = Move::new_position(PlayerColor::Black, Position(2, 3));
         assert_eq!(value_action.1.unwrap(), act);
     }
     #[test]

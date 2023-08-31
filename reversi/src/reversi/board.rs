@@ -16,7 +16,7 @@ pub trait Board {
     fn square_count(&self, color: Square) -> u32;
     fn duplicate(&self) -> Self;
 
-    fn apply_action(&self, action: &Action) -> Option<Self>
+    fn apply_move(&self, move_: &Move) -> Option<Self>
     where
         Self: Sized;
     fn get_movable_positions(&self, color: &PlayerColor) -> Vec<Position>;

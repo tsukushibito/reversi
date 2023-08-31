@@ -1,6 +1,6 @@
 use crate::board::Board;
 use crate::player::Player;
-use crate::{Action, PlayerColor, Squares};
+use crate::{Move, PlayerColor, Squares};
 
 pub struct GameState {
     pub board: Squares,
@@ -33,7 +33,7 @@ where
 {
     pub state: GameState,
     pub history: Vec<T>,
-    pub game_record: Vec<Action>,
+    pub game_record: Vec<Move>,
 }
 
 pub fn play_game<T>(
@@ -46,7 +46,7 @@ where
 {
     let mut board = initial_board.duplicate();
     let mut board_history: Vec<T> = Default::default();
-    let mut game_record: Vec<Action> = Default::default();
+    let mut game_record: Vec<Move> = Default::default();
 
     loop {
         let action = if board.turn() == PlayerColor::Black {
@@ -55,7 +55,7 @@ where
             white_player.take_action(&GameState::new(&board))
         };
 
-        if let Some(next_board) = board.apply_action(&action) {
+        if let Some(next_board) = board.apply_move(&action) {
             board_history.push(board.duplicate());
             game_record.push(action);
             board = next_board;
@@ -77,24 +77,23 @@ where
 mod tests {
     use super::*;
     use crate::board::BitBoard;
-    use crate::Action;
-    use crate::ActionType;
+    use crate::Move;
     use crate::Position;
 
     /// 左上優先で置けるところに置いていくプレイヤー
     struct Test1Player();
 
     impl Player for Test1Player {
-        fn take_action(&self, state: &GameState) -> Action {
+        fn take_action(&self, state: &GameState) -> Move {
             let color = state.turn;
             let board = BitBoard::new(&state.board, state.depth);
             let positions = board.get_movable_positions(&color);
 
             if positions.is_empty() {
-                return Action::new(color, ActionType::Pass);
+                return Move::new_pass(color);
             }
 
-            Action::new(color, ActionType::Move(positions[0]))
+            Move::new_position(color, positions[0])
         }
     }
 
@@ -108,20 +107,20 @@ mod tests {
     }
 
     impl Player for Test2Player {
-        fn take_action(&self, state: &GameState) -> Action {
+        fn take_action(&self, state: &GameState) -> Move {
             let color = state.turn;
             match state.depth {
-                0 => Action::new(color, ActionType::Move(Position(4, 5))),
-                1 => Action::new(color, ActionType::Move(Position(5, 5))),
-                2 => Action::new(color, ActionType::Move(Position(5, 4))),
-                3 => Action::new(color, ActionType::Move(Position(3, 5))),
-                4 => Action::new(color, ActionType::Move(Position(2, 4))),
-                5 => Action::new(color, ActionType::Move(Position(1, 3))),
-                6 => Action::new(color, ActionType::Move(Position(2, 3))),
-                7 => Action::new(color, ActionType::Move(Position(5, 3))),
-                8 => Action::new(color, ActionType::Move(Position(3, 2))),
-                9 => Action::new(color, ActionType::Move(Position(3, 1))),
-                _ => Action::new(color, ActionType::Pass),
+                0 => Move::new_position(color, Position(4, 5)),
+                1 => Move::new_position(color, Position(5, 5)),
+                2 => Move::new_position(color, Position(5, 4)),
+                3 => Move::new_position(color, Position(3, 5)),
+                4 => Move::new_position(color, Position(2, 4)),
+                5 => Move::new_position(color, Position(1, 3)),
+                6 => Move::new_position(color, Position(2, 3)),
+                7 => Move::new_position(color, Position(5, 3)),
+                8 => Move::new_position(color, Position(3, 2)),
+                9 => Move::new_position(color, Position(3, 1)),
+                _ => Move::new_pass(color),
             }
         }
     }

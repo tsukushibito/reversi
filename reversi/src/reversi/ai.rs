@@ -4,7 +4,6 @@ mod game_tree_node;
 mod nega_alpha;
 mod nega_max;
 mod node;
-mod reversi_node;
 mod self_play;
 
 pub use evaluator::*;

@@ -17,7 +17,7 @@ impl Default for ConsoleIoPlayer {
 }
 
 impl Player for ConsoleIoPlayer {
-    fn take_action(&self, state: &GameState) -> Action {
+    fn take_action(&self, state: &GameState) -> Move {
         println!("[{}]", state.depth);
         println!("{}", squares_to_string(&state.board));
         println!("Please input move position.");
@@ -30,7 +30,7 @@ impl Player for ConsoleIoPlayer {
             let pos: Vec<char> = input.trim().chars().collect();
             if pos.len() < 2 || pos[0] < 'a' || pos[0] > 'h' || pos[1] < '1' || pos[1] > '8' {
                 if input == "pass" {
-                    break Action::new(color, ActionType::Pass);
+                    break Move::new_pass(color);
                 }
                 println!("Invalid input!");
             } else {
@@ -38,7 +38,7 @@ impl Player for ConsoleIoPlayer {
                     pos[1] as usize - '1' as usize,
                     pos[0] as usize - 'a' as usize,
                 );
-                break Action::new(color, ActionType::Move(pos));
+                break Move::new_position(color, pos);
             }
         }
     }

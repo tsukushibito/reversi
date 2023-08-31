@@ -1,8 +1,7 @@
 use crate::board::Board;
 use crate::index_to_position;
 use crate::position_to_index;
-use crate::Action;
-use crate::ActionType;
+use crate::Move;
 use crate::PlayerColor;
 use crate::Position;
 use crate::Square;
@@ -198,13 +197,13 @@ impl BitBoard {
 }
 
 impl Board for BitBoard {
-    fn apply_action(&self, action: &Action) -> Option<Self>
+    fn apply_move(&self, move_: &Move) -> Option<Self>
     where
         Self: Sized,
     {
-        match action.action {
-            ActionType::Pass => {
-                if self.get_movable_positions(&action.color).is_empty() {
+        match move_ {
+            Move::Pass(color) => {
+                if self.get_movable_positions(&color).is_empty() {
                     Some(BitBoard::new_from_data(
                         self.black,
                         self.white,
@@ -214,8 +213,8 @@ impl Board for BitBoard {
                     None
                 }
             }
-            ActionType::Move(position) => {
-                let (player, opponent) = if action.color == PlayerColor::Black {
+            Move::Position(color, position) => {
+                let (player, opponent) = if *color == PlayerColor::Black {
                     (self.black, self.white)
                 } else {
                     (self.white, self.black)
@@ -229,7 +228,7 @@ impl Board for BitBoard {
                 }
 
                 let (next_player, next_opponent) = flip(player, opponent, pos);
-                let (next_black, next_white) = if action.color == PlayerColor::Black {
+                let (next_black, next_white) = if *color == PlayerColor::Black {
                     (next_player, next_opponent)
                 } else {
                     (next_opponent, next_player)
@@ -339,12 +338,12 @@ mod tests {
     fn test_apply_action() {
         let board = BitBoard::new_initial();
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(0, 0)));
-        let r = board.apply_action(&act);
+        let m = Move::new_position(PlayerColor::Black, Position(0, 0));
+        let r = board.apply_move(&m);
         assert!(r.is_none());
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
-        let r = board.apply_action(&act);
+        let m = Move::new_position(PlayerColor::Black, Position(2, 3));
+        let r = board.apply_move(&m);
         assert!(r.is_some());
         let next_board = r.unwrap();
         assert!(next_board.squares[position_to_index(&Position(2, 3))] == Square::Black);
@@ -353,8 +352,8 @@ mod tests {
         assert!(next_board.squares[position_to_index(&Position(3, 4))] == Square::Black);
         assert!(next_board.squares[position_to_index(&Position(4, 4))] == Square::White);
 
-        let act = Action::new(PlayerColor::White, ActionType::Move(Position(2, 2)));
-        let r = next_board.apply_action(&act);
+        let m = Move::new_position(PlayerColor::White, Position(2, 2));
+        let r = next_board.apply_move(&m);
         assert!(r.is_some());
         let next_board = r.unwrap();
         assert!(next_board.squares[position_to_index(&Position(2, 3))] == Square::Black);

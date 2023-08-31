@@ -1,6 +1,6 @@
 use crate::{
     board::{BitBoard, Board},
-    Action, ActionType, PlayerColor,
+    Move, PlayerColor,
 };
 
 use super::node::Node;
@@ -9,7 +9,7 @@ pub struct NegaMaxNode {
     pub board: BitBoard,
     pub color: PlayerColor,
     pub move_count: u8,
-    pub last_action: Action,
+    pub last_move: Move,
     pub value: Option<i32>,
     pub children: Vec<NegaMaxNode>,
 }
@@ -20,13 +20,13 @@ impl NegaMaxNode {
         self.children = positions
             .iter()
             .map(|position| {
-                let action = Action::new(self.color, ActionType::Move(*position));
-                let next_board = self.board.apply_action(&action).unwrap();
+                let move_ = Move::new_position(self.color, *position);
+                let next_board = self.board.apply_move(&move_).unwrap();
                 NegaMaxNode {
                     board: next_board,
                     color: self.color.opponent(),
                     move_count: self.move_count + 1,
-                    last_action: action,
+                    last_move: move_,
                     value: None,
                     children: Vec::new(),
                 }
@@ -36,6 +36,29 @@ impl NegaMaxNode {
 }
 
 impl Node for NegaMaxNode {
+    fn new(board: BitBoard, color: PlayerColor, move_count: u8, last_move: Move) -> Self {
+        NegaMaxNode {
+            board,
+            color,
+            move_count,
+            last_move,
+            value: None,
+            children: Vec::new(),
+        }
+    }
+
+    fn board(&self) -> &BitBoard {
+        &self.board
+    }
+
+    fn color(&self) -> &PlayerColor {
+        &self.color
+    }
+
+    fn move_count(&self) -> &u8 {
+        &self.move_count
+    }
+
     fn children(&self) -> &[Self] {
         &self.children
     }
@@ -52,8 +75,8 @@ impl Node for NegaMaxNode {
         &mut self.value
     }
 
-    fn last_action(&self) -> &Action {
-        &self.last_action
+    fn last_action(&self) -> &Move {
+        &self.last_move
     }
 
     fn expand(&mut self) {
@@ -61,13 +84,13 @@ impl Node for NegaMaxNode {
         self.children = positions
             .iter()
             .map(|position| {
-                let action = Action::new(self.color, ActionType::Move(*position));
-                let next_board = self.board.apply_action(&action).unwrap();
+                let action = Move::new_position(self.color, *position);
+                let next_board = self.board.apply_move(&action).unwrap();
                 NegaMaxNode {
                     board: next_board,
                     color: self.color.opponent(),
                     move_count: self.move_count + 1,
-                    last_action: action,
+                    last_move: action,
                     value: None,
                     children: Vec::new(),
                 }
@@ -78,30 +101,6 @@ impl Node for NegaMaxNode {
 
 pub trait NegaMaxEvaluationFunction {
     fn evaluate(&mut self, node: &NegaMaxNode) -> i32;
-}
-
-fn nega_max_search<E>(node: &mut NegaMaxNode, depth: usize, eval: &mut E) -> i32
-where
-    E: NegaMaxEvaluationFunction,
-{
-    if node.board.is_game_over() || depth == 0 {
-        let value = eval.evaluate(&node);
-        node.value = Some(value);
-        value
-    } else {
-        node.expand();
-
-        let vs: Vec<i32> = node
-            .children
-            .iter_mut()
-            .map(|child| -nega_max_search(child, depth - 1, eval))
-            .collect();
-
-        let v = vs.iter().max_by(|a, b| a.cmp(b)).expect("no children");
-
-        node.value = Some(*v);
-        *v
-    }
 }
 
 pub struct NegaMax<E>
@@ -115,8 +114,32 @@ impl<E> NegaMax<E>
 where
     E: NegaMaxEvaluationFunction,
 {
-    fn search(&mut self, node: &mut NegaMaxNode, depth: usize) -> i32 {
-        nega_max_search(node, depth, &mut self.eval)
+    pub fn search(&mut self, node: &mut NegaMaxNode, depth: usize) -> i32 {
+        Self::nega_max(node, depth, &mut self.eval)
+    }
+
+    fn nega_max(node: &mut NegaMaxNode, depth: usize, eval: &mut E) -> i32
+    where
+        E: NegaMaxEvaluationFunction,
+    {
+        if node.board.is_game_over() || depth == 0 {
+            let value = eval.evaluate(&node);
+            node.value = Some(value);
+            value
+        } else {
+            node.expand();
+
+            let vs: Vec<i32> = node
+                .children
+                .iter_mut()
+                .map(|child| -Self::nega_max(child, depth - 1, eval))
+                .collect();
+
+            let v = vs.iter().max_by(|a, b| a.cmp(b)).expect("no children");
+
+            node.value = Some(*v);
+            *v
+        }
     }
 }
 
@@ -124,7 +147,7 @@ where
 mod tests {
     use super::*;
     use crate::board::Board;
-    use crate::{ActionType, Square};
+    use crate::Square;
 
     struct TestEvaluationFunction {}
 
@@ -149,7 +172,7 @@ mod tests {
             board: BitBoard::new_initial(),
             color: PlayerColor::Black,
             move_count: 0,
-            last_action: Action::new(PlayerColor::White, ActionType::Pass),
+            last_move: Move::new_pass(PlayerColor::White),
             value: None,
             children: Vec::new(),
         };

@@ -1,13 +1,19 @@
-use crate::Action;
+use crate::{board::BitBoard, Move, PlayerColor};
 
 pub trait Node: Sized {
+    fn new(board: BitBoard, color: PlayerColor, move_count: u8, last_move: Move) -> Self;
+
+    fn board(&self) -> &BitBoard;
+    fn color(&self) -> &PlayerColor;
+    fn move_count(&self) -> &u8;
+
     fn children(&self) -> &[Self];
     fn children_mut(&mut self) -> &mut Vec<Self>;
     fn value(&self) -> &Option<i32>;
     fn value_mut(&mut self) -> &mut Option<i32>;
-    fn last_action(&self) -> &Action;
+    fn last_action(&self) -> &Move;
 
-    fn expand(&mut self);
+    fn expand(&mut self) {}
 
     fn node_count(&self) -> usize {
         self.children()
@@ -22,7 +28,7 @@ pub trait Node: Sized {
             .fold(1, |acc, child| acc + child.searched_nodes())
     }
 
-    fn candidate(&self) -> Option<Vec<Action>> {
+    fn candidate(&self) -> Option<Vec<Move>> {
         if self.children().is_empty() {
             None
         } else {

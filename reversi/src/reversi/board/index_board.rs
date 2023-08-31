@@ -120,11 +120,11 @@ impl IndexBoard {
 }
 
 impl Board for IndexBoard {
-    fn apply_action(&self, action: &Action) -> Option<IndexBoard> {
-        match action.action {
-            ActionType::Pass => {
+    fn apply_move(&self, move_: &Move) -> Option<IndexBoard> {
+        match move_ {
+            Move::Pass(color) => {
                 // パスできるかチェック
-                if self.can_pass(&action.color) {
+                if self.can_pass(&color) {
                     Some(IndexBoard::new(
                         self.squares,
                         self.depth + 1,
@@ -134,7 +134,7 @@ impl Board for IndexBoard {
                     None
                 }
             }
-            ActionType::Move(position) => {
+            Move::Position(color, position) => {
                 let index = position_to_index(&position);
                 if self.squares[index] != Square::Empty {
                     // 空きマス以外には石を置けない
@@ -143,7 +143,7 @@ impl Board for IndexBoard {
 
                 // 各方向の情報取得
                 let (l2r_finfo, t2b_finfo, tl2br_finfo, bl2tr_finfo) =
-                    self.get_flip_infos(&action.color, &position);
+                    self.get_flip_infos(&color, &position);
 
                 // ひっくり返す石の数
                 let flip_count = l2r_finfo.flip_count()
@@ -158,7 +158,7 @@ impl Board for IndexBoard {
 
                 let mut squares = self.squares;
 
-                let square_color = match action.color {
+                let square_color = match color {
                     PlayerColor::Black => Square::Black,
                     PlayerColor::White => Square::White,
                 };
@@ -308,12 +308,12 @@ mod tests {
         let indexer = Rc::new(Indexer::new());
         let board = IndexBoard::new_initial(indexer);
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(0, 0)));
-        let r = board.apply_action(&act);
+        let m = Move::new_position(PlayerColor::Black, Position(0, 0));
+        let r = board.apply_move(&m);
         assert!(r.is_none());
 
-        let act = Action::new(PlayerColor::Black, ActionType::Move(Position(2, 3)));
-        let r = board.apply_action(&act);
+        let m = Move::new_position(PlayerColor::Black, Position(2, 3));
+        let r = board.apply_move(&m);
         assert!(r.is_some());
         let next_board = r.unwrap();
         assert!(next_board.squares[position_to_index(&Position(2, 3))] == Square::Black);
@@ -322,8 +322,8 @@ mod tests {
         assert!(next_board.squares[position_to_index(&Position(3, 4))] == Square::Black);
         assert!(next_board.squares[position_to_index(&Position(4, 4))] == Square::White);
 
-        let act = Action::new(PlayerColor::White, ActionType::Move(Position(2, 2)));
-        let r = next_board.apply_action(&act);
+        let m = Move::new_position(PlayerColor::White, Position(2, 2));
+        let r = next_board.apply_move(&m);
         assert!(r.is_some());
         let next_board = r.unwrap();
         assert!(next_board.squares[position_to_index(&Position(2, 3))] == Square::Black);

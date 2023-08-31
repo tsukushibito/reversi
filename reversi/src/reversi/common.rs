@@ -48,20 +48,18 @@ impl PlayerColor {
 pub struct Position(pub usize, pub usize);
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-pub enum ActionType {
-    Move(Position),
-    Pass,
+pub enum Move {
+    Position(PlayerColor, Position),
+    Pass(PlayerColor),
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-pub struct Action {
-    pub color: PlayerColor,
-    pub action: ActionType,
-}
+impl Move {
+    pub fn new_position(color: PlayerColor, position: Position) -> Move {
+        Move::Position(color, position)
+    }
 
-impl Action {
-    pub fn new(color: PlayerColor, action: ActionType) -> Action {
-        Action { color, action }
+    pub fn new_pass(color: PlayerColor) -> Move {
+        Move::Pass(color)
     }
 }
 
