@@ -3,6 +3,8 @@ use crate::{
     Move, PlayerColor,
 };
 
+use super::node::Node;
+
 pub struct NegaAlphaNode {
     pub board: BitBoard,
     pub color: PlayerColor,
@@ -12,56 +14,52 @@ pub struct NegaAlphaNode {
     pub children: Vec<NegaAlphaNode>,
 }
 
-impl NegaAlphaNode {
-    pub fn expand(&mut self) {
-        let positions = self.board.get_movable_positions(&self.color);
-        self.children = positions
-            .iter()
-            .map(|position| {
-                let action = Move::new_position(self.color, *position);
-                let next_board = self.board.apply_move(&action).unwrap();
-                NegaAlphaNode {
-                    board: next_board,
-                    color: self.color.opponent(),
-                    move_count: self.move_count + 1,
-                    last_move: action,
-                    value: None,
-                    children: Vec::new(),
-                }
-            })
-            .collect::<Vec<_>>();
-    }
-
-    pub fn node_count(&self) -> usize {
-        self.children
-            .iter()
-            .fold(1, |acc, child| acc + child.node_count())
-    }
-
-    pub fn searched_nodes(&self) -> usize {
-        self.children
-            .iter()
-            .filter(|child| child.value.is_some())
-            .fold(1, |acc, child| acc + child.searched_nodes())
-    }
-
-    pub fn candidate(&self) -> Option<Vec<Move>> {
-        if self.children.is_empty() {
-            None
-        } else {
-            let mut children = self
-                .children
-                .iter()
-                .map(|child| (child.value, child.last_move))
-                .collect::<Vec<_>>();
-            children.sort_by(|a, b| b.0.cmp(&a.0));
-            Some(
-                children
-                    .iter()
-                    .map(|(_, action)| *action)
-                    .collect::<Vec<_>>(),
-            )
+impl Node for NegaAlphaNode {
+    fn new(board: BitBoard, color: PlayerColor, move_count: u8, last_move: Move) -> Self {
+        NegaAlphaNode {
+            board,
+            color,
+            move_count,
+            last_move,
+            value: None,
+            children: Vec::new(),
         }
+    }
+
+    fn board(&self) -> &BitBoard {
+        &self.board
+    }
+
+    fn color(&self) -> &PlayerColor {
+        &self.color
+    }
+
+    fn move_count(&self) -> &u8 {
+        &self.move_count
+    }
+
+    fn children(&self) -> &[Self] {
+        &self.children
+    }
+
+    fn children_mut(&mut self) -> &mut Vec<Self> {
+        &mut self.children
+    }
+
+    fn set_children(&mut self, children: Vec<Self>) {
+        self.children = children;
+    }
+
+    fn value(&self) -> &Option<i32> {
+        &self.value
+    }
+
+    fn value_mut(&mut self) -> &mut Option<i32> {
+        &mut self.value
+    }
+
+    fn last_move(&self) -> &Move {
+        &self.last_move
     }
 }
 
@@ -69,31 +67,7 @@ pub trait NegaAlphaEvaluationFunction {
     fn evaluate(&mut self, node: &NegaAlphaNode) -> i32;
 }
 
-fn nega_max_search<E>(node: &mut NegaAlphaNode, depth: usize, eval: &mut E) -> i32
-where
-    E: NegaAlphaEvaluationFunction,
-{
-    if node.board.is_game_over() || depth == 0 {
-        let value = eval.evaluate(&node);
-        node.value = Some(value);
-        value
-    } else {
-        node.expand();
-
-        let vs: Vec<i32> = node
-            .children
-            .iter_mut()
-            .map(|child| -nega_max_search(child, depth - 1, eval))
-            .collect();
-
-        let v = vs.iter().max_by(|a, b| a.cmp(b)).expect("no children");
-
-        node.value = Some(*v);
-        *v
-    }
-}
-
-pub struct NegaAlpha<E>
+struct NegaAlpha<E>
 where
     E: NegaAlphaEvaluationFunction,
 {
@@ -105,7 +79,31 @@ where
     E: NegaAlphaEvaluationFunction,
 {
     fn search(&mut self, node: &mut NegaAlphaNode, depth: usize) -> i32 {
-        nega_max_search(node, depth, &mut self.eval)
+        Self::nega_alpha(node, depth, &mut self.eval)
+    }
+
+    fn nega_alpha(node: &mut NegaAlphaNode, depth: usize, eval: &mut E) -> i32
+    where
+        E: NegaAlphaEvaluationFunction,
+    {
+        if node.board.is_game_over() || depth == 0 {
+            let value = eval.evaluate(&node);
+            node.value = Some(value);
+            value
+        } else {
+            node.expand();
+
+            let vs: Vec<i32> = node
+                .children
+                .iter_mut()
+                .map(|child| -Self::nega_alpha(child, depth - 1, eval))
+                .collect();
+
+            let v = vs.iter().max_by(|a, b| a.cmp(b)).expect("no children");
+
+            node.value = Some(*v);
+            *v
+        }
     }
 }
 
