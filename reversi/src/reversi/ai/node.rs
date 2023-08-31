@@ -18,20 +18,29 @@ pub trait Node: Sized {
     fn last_move(&self) -> &Move;
 
     fn expand(&mut self) {
-        let positions = self.board().get_movable_positions(&self.color());
-        let children = positions
+        let positions = self.board().get_movable_positions(self.color());
+        let moves = if positions.is_empty() {
+            vec![Move::new_pass(*self.color())]
+        } else {
+            positions
+                .iter()
+                .map(|position| Move::new_position(*self.color(), *position))
+                .collect::<Vec<_>>()
+        };
+
+        let children = moves
             .iter()
-            .map(|position| {
-                let action = Move::new_position(*self.color(), *position);
-                let next_board = self.board().apply_move(&action).unwrap();
+            .map(|move_| {
+                let next_board = self.board().apply_move(move_).unwrap();
                 Self::new(
                     next_board,
                     self.color().opponent(),
                     self.move_count() + 1,
-                    action,
+                    *move_,
                 )
             })
             .collect::<Vec<_>>();
+
         self.set_children(children);
     }
 

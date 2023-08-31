@@ -14,27 +14,6 @@ pub struct NegaMaxNode {
     pub children: Vec<NegaMaxNode>,
 }
 
-impl NegaMaxNode {
-    pub fn expand(&mut self) {
-        let positions = self.board.get_movable_positions(&self.color);
-        self.children = positions
-            .iter()
-            .map(|position| {
-                let move_ = Move::new_position(self.color, *position);
-                let next_board = self.board.apply_move(&move_).unwrap();
-                NegaMaxNode {
-                    board: next_board,
-                    color: self.color.opponent(),
-                    move_count: self.move_count + 1,
-                    last_move: move_,
-                    value: None,
-                    children: Vec::new(),
-                }
-            })
-            .collect::<Vec<_>>();
-    }
-}
-
 impl Node for NegaMaxNode {
     fn new(board: BitBoard, color: PlayerColor, move_count: u8, last_move: Move) -> Self {
         NegaMaxNode {
@@ -134,23 +113,31 @@ mod tests {
     use crate::board::Board;
     use crate::Square;
 
-    struct TestEvaluationFunction {}
+    struct TestEvaluationFunction {
+        is_first: bool,
+    }
 
     impl NegaMaxEvaluationFunction for TestEvaluationFunction {
         fn evaluate(&mut self, node: &NegaMaxNode) -> i32 {
-            let black = node.board.square_count(Square::Black) as i32;
-            let white = node.board.square_count(Square::White) as i32;
-            match node.color {
-                PlayerColor::Black => black - white,
-                PlayerColor::White => white - black,
+            if self.is_first {
+                self.is_first = false;
+                10
+            } else {
+                -10
             }
+            // let black = node.board.square_count(Square::Black) as i32;
+            // let white = node.board.square_count(Square::White) as i32;
+            // match node.color {
+            //     PlayerColor::Black => black - white,
+            //     PlayerColor::White => white - black,
+            // }
         }
     }
 
     #[test]
     fn test_nega_max() {
         let mut nega_max = NegaMax {
-            eval: TestEvaluationFunction {},
+            eval: TestEvaluationFunction { is_first: true },
         };
 
         let mut root = NegaMaxNode {
@@ -162,14 +149,10 @@ mod tests {
             children: Vec::new(),
         };
 
-        nega_max.search(&mut root, 1);
-        for child in &root.children {
-            println!(
-                "{}: {}",
-                child.board.to_console_text(),
-                child.value.unwrap()
-            );
-        }
-        assert_eq!(root.value, Some(3));
+        nega_max.search(&mut root, 7);
+        println!("node_count: {}", root.node_count());
+        println!("searched_nodes: {}", root.searched_nodes());
+        println!("value: {}", root.value().unwrap());
+        assert_eq!(root.value, Some(10));
     }
 }

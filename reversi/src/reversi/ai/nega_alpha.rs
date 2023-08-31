@@ -79,10 +79,16 @@ where
     E: NegaAlphaEvaluationFunction,
 {
     fn search(&mut self, node: &mut NegaAlphaNode, depth: usize) -> i32 {
-        Self::nega_alpha(node, depth, &mut self.eval)
+        Self::nega_alpha(node, depth, i32::MIN + 1, i32::MAX, &mut self.eval)
     }
 
-    fn nega_alpha(node: &mut NegaAlphaNode, depth: usize, eval: &mut E) -> i32
+    fn nega_alpha(
+        node: &mut NegaAlphaNode,
+        depth: usize,
+        alpha: i32,
+        beta: i32,
+        eval: &mut E,
+    ) -> i32
     where
         E: NegaAlphaEvaluationFunction,
     {
@@ -93,16 +99,19 @@ where
         } else {
             node.expand();
 
-            let vs: Vec<i32> = node
-                .children
-                .iter_mut()
-                .map(|child| -Self::nega_alpha(child, depth - 1, eval))
-                .collect();
+            let mut alpha = alpha;
+            for child in node.children_mut().iter_mut() {
+                let v = -Self::nega_alpha(child, depth - 1, -beta, -alpha, eval);
+                if alpha >= beta {
+                    break;
+                }
+                if v > alpha {
+                    alpha = v;
+                }
+            }
 
-            let v = vs.iter().max_by(|a, b| a.cmp(b)).expect("no children");
-
-            node.value = Some(*v);
-            *v
+            node.value = Some(alpha);
+            alpha
         }
     }
 }
@@ -110,26 +119,32 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::board::Board;
-    use crate::Square;
 
-    struct TestEvaluationFunction {}
+    struct TestEvaluationFunction {
+        is_first: bool,
+    }
 
     impl NegaAlphaEvaluationFunction for TestEvaluationFunction {
         fn evaluate(&mut self, node: &NegaAlphaNode) -> i32 {
-            let black = node.board.square_count(Square::Black) as i32;
-            let white = node.board.square_count(Square::White) as i32;
-            match node.color {
-                PlayerColor::Black => black - white,
-                PlayerColor::White => white - black,
+            if self.is_first {
+                self.is_first = false;
+                10
+            } else {
+                -10
             }
+            // let black = node.board.square_count(Square::Black) as i32;
+            // let white = node.board.square_count(Square::White) as i32;
+            // match node.color {
+            //     PlayerColor::Black => black - white,
+            //     PlayerColor::White => white - black,
+            // }
         }
     }
 
     #[test]
     fn test_nega_max() {
         let mut nega_max = NegaAlpha {
-            eval: TestEvaluationFunction {},
+            eval: TestEvaluationFunction { is_first: true },
         };
 
         let mut root = NegaAlphaNode {
@@ -141,14 +156,10 @@ mod tests {
             children: Vec::new(),
         };
 
-        nega_max.search(&mut root, 1);
-        for child in &root.children {
-            println!(
-                "{}: {}",
-                child.board.to_console_text(),
-                child.value.unwrap()
-            );
-        }
-        assert_eq!(root.value, Some(3));
+        nega_max.search(&mut root, 13);
+        println!("node_count: {}", root.node_count());
+        println!("searched_nodes: {}", root.searched_nodes());
+        println!("value: {}", root.value().unwrap());
+        assert_eq!(root.value, Some(10));
     }
 }
