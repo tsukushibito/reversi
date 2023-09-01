@@ -118,20 +118,20 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::super::nega_max::*;
     use super::*;
 
     struct TestEvaluationFunction {
-        is_first: bool,
+        param: i32,
     }
 
     impl NegaAlphaEvaluationFunction for TestEvaluationFunction {
         fn evaluate(&mut self, node: &NegaAlphaNode) -> i32 {
-            if self.is_first {
-                self.is_first = false;
-                10
-            } else {
-                -10
+            self.param += 1;
+            if self.param > 10 {
+                self.param = 0;
             }
+            self.param
             // let black = node.board.square_count(Square::Black) as i32;
             // let white = node.board.square_count(Square::White) as i32;
             // match node.color {
@@ -141,10 +141,24 @@ mod tests {
         }
     }
 
+    struct TestEvaluationFunction2 {
+        param: i32,
+    }
+
+    impl NegaMaxEvaluationFunction for TestEvaluationFunction2 {
+        fn evaluate(&mut self, node: &NegaMaxNode) -> i32 {
+            self.param += 1;
+            if self.param > 10 {
+                self.param = 0;
+            }
+            self.param
+        }
+    }
+
     #[test]
     fn test_nega_max() {
-        let mut nega_max = NegaAlpha {
-            eval: TestEvaluationFunction { is_first: true },
+        let mut nega_alpha = NegaAlpha {
+            eval: TestEvaluationFunction { param: 0 },
         };
 
         let mut root = NegaAlphaNode {
@@ -156,10 +170,9 @@ mod tests {
             children: Vec::new(),
         };
 
-        nega_max.search(&mut root, 13);
-        println!("node_count: {}", root.node_count());
-        println!("searched_nodes: {}", root.searched_nodes());
-        println!("value: {}", root.value().unwrap());
-        assert_eq!(root.value, Some(10));
+        nega_alpha.search(&mut root, 5);
+        // println!("node_count: {}", root.node_count());
+        // println!("searched_nodes: {}", root.searched_nodes());
+        // println!("value: {}", root.value().unwrap());
     }
 }

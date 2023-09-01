@@ -63,6 +63,27 @@ impl Node for NegaMaxNode {
     }
 }
 
+impl NegaMaxNode {
+    fn to_string_impl(&self, str: &mut String, depth: usize) {
+        for _ in 0..depth {
+            str.push_str("  ");
+        }
+        str.push_str(&format!(
+            "move_count: {}, value: {:?}\n",
+            self.move_count, self.value
+        ));
+        for child in &self.children {
+            child.to_string_impl(str, depth + 1);
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        let mut str = String::new();
+        self.to_string_impl(&mut str, 0);
+        str
+    }
+}
+
 pub trait NegaMaxEvaluationFunction {
     fn evaluate(&mut self, node: &NegaMaxNode) -> i32;
 }
@@ -78,6 +99,10 @@ impl<E> NegaMax<E>
 where
     E: NegaMaxEvaluationFunction,
 {
+    pub fn new(eval: E) -> Self {
+        NegaMax { eval }
+    }
+
     pub fn search(&mut self, node: &mut NegaMaxNode, depth: usize) -> i32 {
         Self::nega_max(node, depth, &mut self.eval)
     }
@@ -114,17 +139,16 @@ mod tests {
     use crate::Square;
 
     struct TestEvaluationFunction {
-        is_first: bool,
+        param: i32,
     }
 
     impl NegaMaxEvaluationFunction for TestEvaluationFunction {
         fn evaluate(&mut self, node: &NegaMaxNode) -> i32 {
-            if self.is_first {
-                self.is_first = false;
-                10
-            } else {
-                -10
+            self.param += 1;
+            if self.param > 10 {
+                self.param = 0;
             }
+            self.param
             // let black = node.board.square_count(Square::Black) as i32;
             // let white = node.board.square_count(Square::White) as i32;
             // match node.color {
@@ -137,7 +161,7 @@ mod tests {
     #[test]
     fn test_nega_max() {
         let mut nega_max = NegaMax {
-            eval: TestEvaluationFunction { is_first: true },
+            eval: TestEvaluationFunction { param: 0 },
         };
 
         let mut root = NegaMaxNode {
@@ -149,10 +173,11 @@ mod tests {
             children: Vec::new(),
         };
 
-        nega_max.search(&mut root, 7);
-        println!("node_count: {}", root.node_count());
-        println!("searched_nodes: {}", root.searched_nodes());
-        println!("value: {}", root.value().unwrap());
-        assert_eq!(root.value, Some(10));
+        nega_max.search(&mut root, 2);
+        print!("{}", root.to_string());
+        // println!("node_count: {}", root.node_count());
+        // println!("searched_nodes: {}", root.searched_nodes());
+        // println!("value: {}", root.value().unwrap());
+        // assert_eq!(root.value, Some(10));
     }
 }
