@@ -8,6 +8,9 @@ edition = "2018"
 [lib]
 crate-type = ["lib", "cdylib", "staticlib"]
 
+[dependencies]
+tensorflow = "0.21.0"
+
 [dev-dependencies]
 criterion = "0.5.1"
 

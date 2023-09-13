@@ -1,5 +1,10 @@
 FROM python:3.9
 
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get install -y --no-install-recommends \
+    zsh libclang-dev clang wget git lld lldb
+
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
@@ -25,10 +30,12 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
-RUN apt-get -y update
-RUN apt-get -y upgrade
-RUN apt-get install -y --no-install-recommends \
-    zsh libclang-dev
+RUN rustup component add rustfmt
+RUN rustup component add clippy
+
+RUN wget https://github.com/bazelbuild/bazelisk/releases/download/v1.18.0/bazelisk-linux-arm64
+RUN chmod +x bazelisk-linux-arm64
+RUN mv bazelisk-linux-arm64 /usr/local/bin/bazel
 
 ARG USER_NAME=reversi
 ARG USER_ID=1000
@@ -42,9 +49,9 @@ USER ${USER_ID}
 ENV HOME /home/${USER_NAME}
 WORKDIR ${HOME}
 
-RUN rustup component add rustfmt
-RUN rustup component add clippy
-
 COPY --chown=${GROUP_ID}:${USER_ID} install_tf.sh ./install_tf.sh
 RUN chmod 755 install_tf.sh
 RUN ./install_tf.sh
+
+COPY libtensorflow_arm64/libtensorflow.so /usr/local/lib/
+COPY libtensorflow_arm64/libtensorflow_framework.so /usr/local/lib/
