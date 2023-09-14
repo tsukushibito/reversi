@@ -52,6 +52,3 @@ WORKDIR ${HOME}
 COPY --chown=${GROUP_ID}:${USER_ID} install_tf.sh ./install_tf.sh
 RUN chmod 755 install_tf.sh
 RUN ./install_tf.sh
-
-COPY libtensorflow_arm64/libtensorflow.so /usr/local/lib/
-COPY libtensorflow_arm64/libtensorflow_framework.so /usr/local/lib/
