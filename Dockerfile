@@ -33,9 +33,19 @@ RUN set -eux; \
 RUN rustup component add rustfmt
 RUN rustup component add clippy
 
-RUN wget https://github.com/bazelbuild/bazelisk/releases/download/v1.18.0/bazelisk-linux-arm64
-RUN chmod +x bazelisk-linux-arm64
-RUN mv bazelisk-linux-arm64 /usr/local/bin/bazel
+# RUN wget https://github.com/bazelbuild/bazelisk/releases/download/v1.18.0/bazelisk-linux-arm64
+# RUN chmod +x bazelisk-linux-arm64
+# RUN mv bazelisk-linux-arm64 /usr/local/bin/bazel
+
+COPY libtensorflow_arm64/libtensorflow.so.2.14.0 /usr/local/lib/
+COPY libtensorflow_arm64/libtensorflow.so.2 /usr/local/lib/
+COPY libtensorflow_arm64/libtensorflow.so /usr/local/lib/
+COPY libtensorflow_arm64/libtensorflow_framework.so.2.14.0 /usr/local/lib/
+COPY libtensorflow_arm64/libtensorflow_framework.so.2 /usr/local/lib/
+ENV PKG_CONFIG_PATH /usr/lib/pkgconfig
+COPY tensorflow.pc $PKG_CONFIG_PATH
+COPY tensorflow_cc.pc $PKG_CONFIG_PATH
+RUN pkg-config --libs tensorflow
 
 ARG USER_NAME=reversi
 ARG USER_ID=1000
