@@ -38,14 +38,17 @@ RUN rustup component add clippy
 # RUN mv bazelisk-linux-arm64 /usr/local/bin/bazel
 
 COPY libtensorflow_arm64/libtensorflow.so.2.14.0 /usr/local/lib/
-COPY libtensorflow_arm64/libtensorflow.so.2 /usr/local/lib/
-COPY libtensorflow_arm64/libtensorflow.so /usr/local/lib/
 COPY libtensorflow_arm64/libtensorflow_framework.so.2.14.0 /usr/local/lib/
-COPY libtensorflow_arm64/libtensorflow_framework.so.2 /usr/local/lib/
+RUN cd /usr/local/lib/ && \
+    ln -s libtensorflow_framework.so.2.14.0 libtensorflow_framework.so.2 && \
+    ln -s libtensorflow_framework.so.2 libtensorflow_framework.so && \
+    ln -s libtensorflow.so.2.14.0 libtensorflow.so.2 && \
+    ln -s libtensorflow.so.2 libtensorflow.so
 ENV PKG_CONFIG_PATH /usr/lib/pkgconfig
 COPY tensorflow.pc $PKG_CONFIG_PATH
 COPY tensorflow_cc.pc $PKG_CONFIG_PATH
 RUN pkg-config --libs tensorflow
+RUN ldconfig
 
 ARG USER_NAME=reversi
 ARG USER_ID=1000
