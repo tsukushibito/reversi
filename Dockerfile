@@ -62,6 +62,7 @@ USER ${USER_ID}
 ENV HOME /home/${USER_NAME}
 WORKDIR ${HOME}
 
-COPY --chown=${GROUP_ID}:${USER_ID} install_tf.sh ./install_tf.sh
-RUN chmod 755 install_tf.sh
-RUN ./install_tf.sh
+RUN pip install tensorflow
+# COPY --chown=${GROUP_ID}:${USER_ID} install_tf.sh ./install_tf.sh
+# RUN chmod 755 install_tf.sh
+# RUN ./install_tf.sh

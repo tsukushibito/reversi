@@ -22,7 +22,9 @@
 				"ms-azuretools.vscode-docker",
 				"mhutchie.git-graph",
 				"eamodio.gitlens",
-				"rust-lang.rust-analyzer"
+				"rust-lang.rust-analyzer",
+				"ms-python.python",
+				"ms-python.vscode-pylance"
 			]
 		}
 	}
